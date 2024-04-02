@@ -4,8 +4,10 @@ import {getPasskeyOptions} from "@/utils";
 import {getAccountByPublicKey} from "@/core/account";
 import {GlobalConfig} from "@/constants";
 import {extractPublicKey} from "@/core/utils";
+import {useRouter} from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
 
   const handleClick = async () => {
     try {
@@ -24,7 +26,9 @@ export default function Home() {
         ...cred,
         account,
         options
-      }))
+      }));
+
+      router.push('/wallet');
       // const verification = await verifyAuthenticationResponse({
       //   response: cred,
       //   expectedChallenge: options.challenge.toString(),
