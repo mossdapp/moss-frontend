@@ -24,7 +24,7 @@ function splitHexTo128Bits(hexString: string) {
 
 
 
-const provider = new RpcProvider({nodeUrl: 'https://starknet-testnet.blastapi.io/d781dad5-e00e-4b51-a082-79dc3ca3fb80/rpc/v0_5'});
+const provider = new RpcProvider({nodeUrl: 'https://starknet-sepolia.public.blastapi.io'});
 
 
 
@@ -60,7 +60,7 @@ export const getAccountByPublicKey = (publicKey: string) => {
     ]);
 
 
-    const AAaccountClassHash = '0x05a703a2b15c6423caf8c8725ad46066666c919fb6c82609aaf848580cd01e00';
+    const AAaccountClassHash = '0x05330f0bec15e2b9bf53b8d5351b5664b7c3e3b3546b3dcb0d9f6e6964850c41';
     console.log('Customized account class hash =', AAaccountClassHash);
 
     const AAcontractAddress = hash.calculateContractAddressFromHash(
@@ -137,7 +137,7 @@ export async function deployAccount(publicKey: string, signHash: string) {
         const [sHexFirstHalf, sHexSecondHalf] = splitHexTo128Bits(sHex);
 
 // 将分割后的部分组合成一个数组
-        const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, '0'];
+        const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, 1];
 
         console.log("signatureArray = ", hexPartsArray);
 
