@@ -24,8 +24,7 @@ function splitHexTo128Bits(hexString: string) {
 
 
 
-const provider = new RpcProvider({nodeUrl: 'https://starknet-testnet.blastapi.io/d781dad5-e00e-4b51-a082-79dc3ca3fb80/rpc/v0_5'});
-
+const provider = new RpcProvider({nodeUrl: 'https://starknet-sepolia.public.blastapi.io'});
 
 
 export const getAccountByPublicKey = (publicKey: string) => {
@@ -60,7 +59,7 @@ export const getAccountByPublicKey = (publicKey: string) => {
     ]);
 
 
-    const AAaccountClassHash = '0x05a703a2b15c6423caf8c8725ad46066666c919fb6c82609aaf848580cd01e00';
+    const AAaccountClassHash = '0x00dfed88fb44f2df096a39c3686830dc78fe09f89459be3177c1c59cac1f338b';
     console.log('Customized account class hash =', AAaccountClassHash);
 
     const AAcontractAddress = hash.calculateContractAddressFromHash(
@@ -82,7 +81,7 @@ export const getAccountByPublicKey = (publicKey: string) => {
 }
 
 export const getDeployHash = (publicKey: string) => {
-    const chId = '0x534e5f474f45524c49';
+    const chId = '0x534e5f5345504f4c4941';
 
     const {contractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
 
