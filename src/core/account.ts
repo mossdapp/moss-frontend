@@ -59,7 +59,7 @@ export const getAccountByPublicKey = (publicKey: string) => {
     ]);
 
 
-    const AAaccountClassHash = '0x00dfed88fb44f2df096a39c3686830dc78fe09f89459be3177c1c59cac1f338b';
+    const AAaccountClassHash = '0x05a703a2b15c6423caf8c8725ad46066666c919fb6c82609aaf848580cd01e00';
     console.log('Customized account class hash =', AAaccountClassHash);
 
     const AAcontractAddress = hash.calculateContractAddressFromHash(
@@ -136,7 +136,7 @@ export async function deployAccount(publicKey: string, signHash: string) {
         const [sHexFirstHalf, sHexSecondHalf] = splitHexTo128Bits(sHex);
 
 // 将分割后的部分组合成一个数组
-        const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, '0'];
+        const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, 1 , 6];
 
         console.log("signatureArray = ", hexPartsArray);
 

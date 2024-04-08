@@ -30,11 +30,24 @@ export default function Wallet() {
             challenge: bufferDecodeHexString(deployHash),
             rpId: window.location.hostname, // 确保与当前页面的域名相匹配
         }
-        const cred = await navigator.credentials.get({ publicKey: publicKeyCredentialRequestOptions });
+        const cred = await navigator.credentials.get({ publicKey: publicKeyCredentialRequestOptions }) as any;
 
         const signature = cred?.response.signature;
         const signatureHex = arrayBufferToHex(signature);
 
+        // 提取客户端数据JSON
+        const clientDataJSON = cred?.response.clientDataJSON;
+
+
+        // 获取authenticatorData，这里的assertion是一个PublicKeyCredential对象
+        const authenticatorData = cred?.response.authenticatorData;
+
+        const clientDataJSONHex = arrayBufferToHex(clientDataJSON);
+        const authenticatorDataHex = arrayBufferToHex(authenticatorData);
+
+        // 这里你可以将提取到的数据发送给服务器进行验证
+        console.log(`Client Data JSON: ${clientDataJSONHex}`);
+        console.log(`authenticatorData: ${authenticatorDataHex}`);
         console.log(signatureHex);
 
         deployAccount(account.publicKey, signatureHex.slice(2));
