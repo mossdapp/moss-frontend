@@ -42,15 +42,23 @@ export default function Wallet() {
         // 获取authenticatorData，这里的assertion是一个PublicKeyCredential对象
         const authenticatorData = cred?.response.authenticatorData;
 
+
         const clientDataJSONHex = arrayBufferToHex(clientDataJSON);
         const authenticatorDataHex = arrayBufferToHex(authenticatorData);
+
+        // 获取最后四个字节的十六进制字符串
+        const lastFourBytesHex = authenticatorDataHex.slice(-8);  // 获取最后8个字符
+
+        // 解析十六进制为整数，假设大端序
+        const signCount = parseInt(lastFourBytesHex, 16);  // 只取最后两位数
 
         // 这里你可以将提取到的数据发送给服务器进行验证
         console.log(`Client Data JSON: ${clientDataJSONHex}`);
         console.log(`authenticatorData: ${authenticatorDataHex}`);
+        console.log(`signCount: ${signCount}`);
         console.log(signatureHex);
 
-        deployAccount(account.publicKey, signatureHex.slice(2));
+        deployAccount(account.publicKey, signatureHex.slice(2), signCount);
     }
 
     console.log(contractInfo);

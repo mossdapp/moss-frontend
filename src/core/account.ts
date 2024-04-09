@@ -59,7 +59,7 @@ export const getAccountByPublicKey = (publicKey: string) => {
     ]);
 
 
-    const AAaccountClassHash = '0x05a703a2b15c6423caf8c8725ad46066666c919fb6c82609aaf848580cd01e00';
+    const AAaccountClassHash = '0x00dfed88fb44f2df096a39c3686830dc78fe09f89459be3177c1c59cac1f338b';
     console.log('Customized account class hash =', AAaccountClassHash);
 
     const AAcontractAddress = hash.calculateContractAddressFromHash(
@@ -94,21 +94,23 @@ export const getDeployHash = (publicKey: string) => {
         callData,
         salt,
         1n,
-        100000000000000n,
+        1000000000000000n,
         chId,
         0n
     );
 
-    const deployHash = deployTransctionHash.startsWith('0x') ? deployTransctionHash.substring(2) : deployTransctionHash;
+    let deployHash = deployTransctionHash.startsWith('0x') ? deployTransctionHash.substring(2) : deployTransctionHash;
 
+    // 确保deployHash为64位长度
+    deployHash = deployHash.padStart(64, '0');
 
-    console.log("deployTransctionHash = ", deployTransctionHash );
+    console.log("deployHash = ", deployHash);
 
     return deployHash;
 }
 
 
-export async function deployAccount(publicKey: string, signHash: string) {
+export async function deployAccount(publicKey: string, signHash: string, signCount: number) {
     try {
         const {contractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
 
@@ -136,13 +138,13 @@ export async function deployAccount(publicKey: string, signHash: string) {
         const [sHexFirstHalf, sHexSecondHalf] = splitHexTo128Bits(sHex);
 
 // 将分割后的部分组合成一个数组
-        const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, 1 , 6];
+        const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, 1 , signCount];
 
         console.log("signatureArray = ", hexPartsArray);
 
         // 准备details对象
         const details = {
-            maxFee:  100000000000000n, // 设定最大费用，根据需要调整
+            maxFee:  1000000000000000n, // 设定最大费用，根据需要调整
             version: 1n, // 合约版本
             nonce: 0n, // 随机数，根据需要调整
         };
