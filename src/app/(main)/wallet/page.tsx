@@ -10,9 +10,13 @@ import useSWR from "swr";
 import {queryContractInfo, queryTokenBalance} from "@/services/wallet";
 import {shortenAddress} from "@/utils/common";
 import {CopyText} from "@/components/CopyText";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
+import {RocketIcon} from "lucide-react";
+import {useRouter} from "next/navigation";
 
 
 export default function Wallet() {
+    const router = useRouter();
     const [data] = useLocalStorage<any>(GlobalConfig.mossWalletKey, null);
 
     const { data: banlanceData } = useSWR(['balance', data?.account?.contractAddress], () => queryTokenBalance(data?.account?.contractAddress));
@@ -64,7 +68,7 @@ export default function Wallet() {
     console.log(contractInfo);
 
     return (
-        <Container>
+        <div>
             <div className={'text-center font-bold text-lg'}>
                 Wallet
             </div>
@@ -73,9 +77,18 @@ export default function Wallet() {
                     {shortenAddress(account?.contractAddress)}
                 </CopyText>
             </div>
-            <div className={'flex justify-end items-center mt-5'}>
-                <Button onClick={handleDeploy}>Deploy Account</Button>
-            </div>
+            {
+                !contractInfo?.data ? (
+                        <Alert className={'mt-8'} variant="destructive">
+                            <RocketIcon className="h-4 w-4" />
+                            <AlertTitle>Deploy!</AlertTitle>
+                            <AlertDescription className={'flex justify-between items-center'}>
+                                Account contract not deploy!
+                                <Button onClick={handleDeploy} variant={'destructive'} size={'sm'}>Deploy</Button>
+                            </AlertDescription>
+                        </Alert>
+                ) : null
+            }
 
             <div className={'mt-8'}>
                 <div className={'font-bold text-lg'}>
@@ -85,7 +98,9 @@ export default function Wallet() {
                     {
                         banlanceData?.data?.tokenBalancesByOwnerAddress.map((item: any) => {
                             return (
-                                <div key={item.id} className={'flex items-center justify-between'}>
+                                <div key={item.id} className={'flex items-center justify-between cursor-pointer'} onClick={() => {
+                                    router.push(`/transfer/${item.token_contract_address}?symbol=${item.contract_token_contract.symbol}`)
+                                }}>
                                     <img className={'w-3'} src={item.contract_token_contract.icon_url}
                                          alt={item.contract_token_contract.symbol}/>
                                     <span>{item.contract_token_contract.symbol}</span>
@@ -96,6 +111,6 @@ export default function Wallet() {
                     }
                 </div>
             </div>
-        </Container>
+        </div>
     )
 }

@@ -9,8 +9,8 @@ export const getPasskeyOptions = () => {
         },
         "user": {
             "id": Buffer.from("GOVsRuhMQWNoScmh_cK02QyQwTolHSUSlX5ciH242Y4"),
-            "name": "moss-user",
-            "displayName": "moss-user"
+            "name": "moss",
+            "displayName": "moss"
         },
         "pubKeyCredParams": [
             {

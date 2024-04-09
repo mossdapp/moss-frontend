@@ -45,13 +45,13 @@ export default function Home() {
   }
   return (
       <Container>
-        <div className={'text-center flex flex-col justify-center gap-6 '}>
+        <div className={'h-full text-center flex flex-col items-center justify-center gap-6 '}>
           <div className={'mb-8'}>
             <h1 className="text-4xl font-bold text-primary">Welcome to Moss</h1>
             <p className="text-lg text-gray-500 mt-4">A decentralized identity wallet</p>
           </div>
-          <Button onClick={handleClick}>Create New Wallet</Button>
-          <Button onClick={handleClick}>Login With Passkey</Button>
+          <Button onClick={handleClick} className={'w-full'}>Create New Wallet</Button>
+          <Button onClick={handleClick} className={'w-full'}>Login With Passkey</Button>
         </div>
       </Container>
   );

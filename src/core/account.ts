@@ -59,7 +59,7 @@ export const getAccountByPublicKey = (publicKey: string) => {
     ]);
 
 
-    const AAaccountClassHash = '0x00dfed88fb44f2df096a39c3686830dc78fe09f89459be3177c1c59cac1f338b';
+    const AAaccountClassHash = '0x02c39894eaa4f7c5cd1c0fa62f2cac6396bb2126514337433054c068520b4994';
     console.log('Customized account class hash =', AAaccountClassHash);
 
     const AAcontractAddress = hash.calculateContractAddressFromHash(
