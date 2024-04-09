@@ -8,7 +8,7 @@ export const TabBar = ({title}: {title: string}) => {
         <div className={'flex justify-center font-bold text-lg relative'}>
             <ArrowLeft onClick={() => {
                 router.back();
-            }} className={'absolute left-5 top-[50%] mt-[-12px] cursor-pointer hover:text-foreground/60'}/>
+            }} className={'absolute left-0 top-[50%] mt-[-12px] cursor-pointer hover:text-foreground/60'}/>
             <div>
                 {title}
             </div>

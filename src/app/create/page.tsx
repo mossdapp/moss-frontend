@@ -6,6 +6,8 @@ import {GlobalConfig} from "@/constants";
 import {extractPublicKey} from "@/core/utils";
 import {useRouter} from "next/navigation";
 import {Container} from "@/components/Container";
+import logoImg from '@/assets/moss.png';
+
 
 export default function Home() {
 
@@ -46,6 +48,7 @@ export default function Home() {
   return (
       <Container>
         <div className={'h-full text-center flex flex-col items-center justify-center gap-6 '}>
+          <img src={logoImg.src} className={'w-12 h-12 absolute left-5 top-5'} alt=""/>
           <div className={'mb-8'}>
             <h1 className="text-4xl font-bold text-primary">Welcome to Moss</h1>
             <p className="text-lg text-gray-500 mt-4">A decentralized identity wallet</p>

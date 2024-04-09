@@ -1,3 +1,4 @@
+'use client';
 import {Copy} from "lucide-react";
 import {ReactNode, useEffect} from "react";
 import {useCopyToClipboard} from "react-use";
