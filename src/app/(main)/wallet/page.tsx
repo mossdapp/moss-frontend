@@ -51,7 +51,7 @@ export default function Wallet() {
         const authenticatorDataHex = arrayBufferToHex(authenticatorData);
 
         // 获取最后四个字节的十六进制字符串
-        const lastFourBytesHex = authenticatorDataHex.slice(-8);  // 获取最后8个字符
+        const lastFourBytesHex = authenticatorDataHex.slice(-10);  // 获取最后8个字符
 
         // 解析十六进制为整数，假设大端序
         const signCount = parseInt(lastFourBytesHex, 16);  // 只取最后两位数
