@@ -20,14 +20,14 @@ export default function Wallet() {
     const [data] = useLocalStorage<any>(GlobalConfig.mossWalletKey, null);
     const account = data?.account;
 
-    const { data: banlanceData } = useSWR(['balance', data?.account?.contractAddress], () => queryTokenBalance(data?.account?.contractAddress));
+    const { data: banlanceData } = useSWR(['balance', account?.contractAddress], () => queryTokenBalance(data?.account?.contractAddress));
 
 
-    const { data: contractInfo } = useSWR(['contractInfo', data?.account?.contractAddress], () => queryContractInfo(data?.account?.contractAddress));
+    const { data: contractInfo } = useSWR(['contractInfo', account?.contractAddress], () => queryContractInfo(data?.account?.contractAddress));
 
 
     const handleDeploy = async () => {
-        const deployHash = getDeployHash(account.publicKey);
+        const deployHash = await getDeployHash(account.publicKey);
 
         const publicKeyCredentialRequestOptions = {
             challenge: bufferDecodeHexString(deployHash),

@@ -1,4 +1,16 @@
-import {Signer, constants, ec, json, stark, Provider, hash, CallData, RpcProvider, transaction} from "starknet";
+import {
+    Signer,
+    constants,
+    ec,
+    json,
+    stark,
+    Provider,
+    hash,
+    CallData,
+    RpcProvider,
+    transaction,
+    Contract
+} from "starknet";
 import {extractRSFromSignature} from "@/core/utils";
 
 // 将16进制字符串填充到64个字符
@@ -22,17 +34,34 @@ function splitHexTo128Bits(hexString: string) {
     return [firstHalf, secondHalf];
 }
 
-const provider = new RpcProvider({nodeUrl: 'https://starknet-sepolia.public.blastapi.io'});
+export const provider = new RpcProvider({nodeUrl: 'https://starknet-sepolia.public.blastapi.io'});
 
 const chainId = '0x534e5f5345504f4c4941';
 
-export const getAccountByPublicKey = (publicKey: string) => {
-    // 04
-// 93d50c1b087f73b2e5f0caab14255c3a
-// 91cd1bb07778ffef2b7a48c0f97f747c
-// 3b19f42ec6636f98768920310b2146d0
-// 1f03397851d30d656b5eb58a266320f6
+const getNonce = async (address: string) => {
+    try {
+        const res = await fetch('https://starknet-sepolia.public.blastapi.io/rpc/v0_7', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                method: 'starknet_getNonce',
+                params: ['latest', address],
+                id: 0
+            })
+        });
+        const data = await res.json();
+        console.log(data, 'info')
+        return parseInt(data.result, 16);
+    } catch (e) {
+        console.error(e);
+        return 0n;
+    }
+}
 
+export const getAccountByPublicKey = (publicKey: string) => {
     const AApublicKey = publicKey;
 
     console.log(`Public Key: ${AApublicKey}`);
@@ -79,12 +108,10 @@ export const getAccountByPublicKey = (publicKey: string) => {
     };
 }
 
-export const getDeployHash = (publicKey: string) => {
-
+export const getDeployHash = async (publicKey: string) => {
     const {contractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
 
-
-
+    const nonce = await getNonce(contractAddress);
     // 获取交易hash
     const deployTransctionHash = hash.calculateDeployAccountTransactionHash(
         contractAddress,
@@ -94,7 +121,7 @@ export const getDeployHash = (publicKey: string) => {
         1n,
         1000000000000000n,
         chainId,
-        0n
+        nonce
     );
 
     let deployHash = deployTransctionHash.startsWith('0x') ? deployTransctionHash.substring(2) : deployTransctionHash;
@@ -152,9 +179,12 @@ export async function deployAccount(publicKey: string, signHash: string, signCou
 }
 
 export async function invokeTx(publicKey: string, signHash: string, signCount: number) {
+
     const SimpleStorageAddress = '0x4ef8da68c94b71859f3b34cdce6b6128f03b10b568b523551cc28973e6f2f2a';
     try {
         const {contractAddress: AAcontractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
+
+        await getNonce(AAcontractAddress);
         const transactions = [
             {
                 contractAddress: SimpleStorageAddress,
@@ -166,7 +196,9 @@ export async function invokeTx(publicKey: string, signHash: string, signCount: n
         // const mycalldata = transaction.getExecuteCalldata(transactions, '1');
         const mycalldata = transaction.getExecuteCalldata(transactions, '1');
 
-        console.log("mycalldata = ", mycalldata, signCount);
+        const nonce = await getNonce(AAcontractAddress);
+
+        console.log("mycalldata = ", mycalldata, signCount, nonce);
 
         // test argent hash, is ok
         /*
@@ -188,7 +220,7 @@ export async function invokeTx(publicKey: string, signHash: string, signCount: n
             mycalldata,
             1500000000000000n,
             chainId,
-            2n
+            nonce
         );
 
         const invokeHash = invokeTransctionHash.startsWith('0x') ? invokeTransctionHash.substring(2) : invokeTransctionHash;
@@ -228,7 +260,7 @@ export async function invokeTx(publicKey: string, signHash: string, signCount: n
         const details = {
             maxFee:  1500000000000000n, // 设定最大费用，根据需要调整, must be the same as hash
             version: 1n, // 合约版本
-            nonce: 2n, // 随机数，根据需要调整
+            nonce: nonce, // 随机数，根据需要调整
         };
 
 //    const myCall = myTestContract.populate("transfer", [MywalletAddress, 100000]);

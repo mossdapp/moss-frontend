@@ -9,6 +9,8 @@ import {useLocalStorage} from "react-use";
 import {GlobalConfig} from "@/constants";
 import {getDeployHash, invokeTx} from "@/core/account";
 import {arrayBufferToHex, bufferDecodeHexString} from "@/core/utils";
+import useSWR from "swr";
+import {queryTokenBalance} from "@/services/wallet";
 
 
 export default function TransferPage() {
@@ -19,8 +21,11 @@ export default function TransferPage() {
     const [data] = useLocalStorage<any>(GlobalConfig.mossWalletKey, null);
     const account = data?.account;
 
+    const { data: banlanceData } = useSWR(['balance', account?.contractAddress], () => queryTokenBalance(data?.account?.contractAddress));
+
+
     const handleClick = async () => {
-        const deployHash = getDeployHash(account.publicKey);
+        const deployHash = await getDeployHash(account.publicKey);
 
         const publicKeyCredentialRequestOptions = {
             challenge: bufferDecodeHexString(deployHash),
