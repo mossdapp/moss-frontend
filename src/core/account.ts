@@ -134,6 +134,47 @@ export const getDeployHash = async (publicKey: string) => {
     return deployHash;
 }
 
+export const getInvokeHash = async (publicKey: string) => {
+    const SimpleStorageAddress = '0x4ef8da68c94b71859f3b34cdce6b6128f03b10b568b523551cc28973e6f2f2a';
+    const {contractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
+    const transactions = [
+        {
+            contractAddress: SimpleStorageAddress,
+            entrypoint: 'set',
+            calldata: [1]
+        }
+    ];
+    // 1 must be string
+    const mycalldata = transaction.getExecuteCalldata(transactions, '1');
+
+    const nonce = await getNonce(contractAddress);
+
+    console.log("mycalldata = ", mycalldata, nonce);
+
+
+
+    // 获取交易hash  calldata is RawCalldata,RawCalldata BigNumberish array, use CallData.compile() to convert to Calldata
+    const invokeTransctionHash = hash.calculateTransactionHash(
+        contractAddress,
+        1n,    // version
+        mycalldata,
+        1500000000000000n,  //maxfee
+        chainId,
+        nonce
+    );
+
+    let invokeHash = invokeTransctionHash.startsWith('0x') ? invokeTransctionHash.substring(2) : invokeTransctionHash;
+
+    console.log("invokeHash = ", invokeHash);
+
+
+    // 确保deployHash为64位长度
+    invokeHash = invokeHash.padStart(64, '0');
+
+    console.log("invokeHash = ", invokeHash);
+
+    return invokeHash;
+}
 
 export async function deployAccount(publicKey: string, signHash: string, signCount: number) {
     try {
@@ -193,40 +234,9 @@ export async function invokeTx(publicKey: string, signHash: string, signCount: n
             }
         ];
         // 1 must be string
-        // const mycalldata = transaction.getExecuteCalldata(transactions, '1');
         const mycalldata = transaction.getExecuteCalldata(transactions, '1');
 
         const nonce = await getNonce(AAcontractAddress);
-
-        console.log("mycalldata = ", mycalldata, signCount, nonce);
-
-        // test argent hash, is ok
-        /*
-        const invokeTransctionHash_argent = hash.calculateTransactionHash(
-            '0x7fc931e299f9a546ac8318ce904e60d79edb516270c858bbf0361cff01430a8',
-            1n,
-            mycalldata,
-            1500000000000000n,
-            chId,
-            11n
-        );
-        console.log("invokeTransctionHash_argent = ", invokeTransctionHash_argent);
-        */
-
-        // 获取交易hash  calldata is RawCalldata,RawCalldata BigNumberish array, use CallData.compile() to convert to Calldata
-        const invokeTransctionHash = hash.calculateTransactionHash(
-            AAcontractAddress,
-            1n,
-            mycalldata,
-            1500000000000000n,
-            chainId,
-            nonce
-        );
-
-        const invokeHash = invokeTransctionHash.startsWith('0x') ? invokeTransctionHash.substring(2) : invokeTransctionHash;
-
-        console.log("invokeHash = ", invokeHash);
-
         const {rHex, sHex} = extractRSFromSignature(signHash);
 
 
@@ -238,19 +248,6 @@ export async function invokeTx(publicKey: string, signHash: string, signCount: n
         const [sHexFirstHalf, sHexSecondHalf] = splitHexTo128Bits(sHex);
 
 
-        /*
-        // 从十六进制字符串创建公钥点
-        const keyPair = rec.keyFromPublic(AApublicKey, 'hex');
-        const publicKeyPoint = keyPair.getPublic();
-
-        // 获取y坐标，并确定其奇偶性
-        const yParity = publicKeyPoint.getY().isOdd();
-
-
-        console.log("yParity = ", yParity);
-        */
-
-
         // 将分割后的部分组合成一个数组
         const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, 1, signCount];
 
@@ -258,12 +255,11 @@ export async function invokeTx(publicKey: string, signHash: string, signCount: n
 
         // 准备details对象
         const details = {
-            maxFee:  1500000000000000n, // 设定最大费用，根据需要调整, must be the same as hash
+            maxFee:  1500000000000000n, // 设定最大费用，根据需要调整, must be the same as hash function
             version: 1n, // 合约版本
             nonce: nonce, // 随机数，根据需要调整
         };
 
-//    const myCall = myTestContract.populate("transfer", [MywalletAddress, 100000]);
 
         // invoke erc20 Contract 函数
         /*

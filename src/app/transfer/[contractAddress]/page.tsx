@@ -7,7 +7,7 @@ import {Button} from "@/components/ui/button";
 import {useSearchParams} from "next/navigation";
 import {useLocalStorage} from "react-use";
 import {GlobalConfig} from "@/constants";
-import {getDeployHash, invokeTx} from "@/core/account";
+import {getInvokeHash, invokeTx} from "@/core/account";
 import {arrayBufferToHex, bufferDecodeHexString} from "@/core/utils";
 import useSWR from "swr";
 import {queryTokenBalance} from "@/services/wallet";
@@ -25,7 +25,7 @@ export default function TransferPage() {
 
 
     const handleClick = async () => {
-        const deployHash = await getDeployHash(account.publicKey);
+        const deployHash = await getInvokeHash(account.publicKey);
 
         const publicKeyCredentialRequestOptions = {
             challenge: bufferDecodeHexString(deployHash),
