@@ -1,4 +1,4 @@
-import {Signer, constants, ec, json, stark, Provider, hash, CallData,RpcProvider} from "starknet";
+import {Signer, constants, ec, json, stark, Provider, hash, CallData, RpcProvider, transaction} from "starknet";
 import {extractRSFromSignature} from "@/core/utils";
 
 // 将16进制字符串填充到64个字符
@@ -22,10 +22,9 @@ function splitHexTo128Bits(hexString: string) {
     return [firstHalf, secondHalf];
 }
 
-
-
 const provider = new RpcProvider({nodeUrl: 'https://starknet-sepolia.public.blastapi.io'});
 
+const chainId = '0x534e5f5345504f4c4941';
 
 export const getAccountByPublicKey = (publicKey: string) => {
     // 04
@@ -81,7 +80,6 @@ export const getAccountByPublicKey = (publicKey: string) => {
 }
 
 export const getDeployHash = (publicKey: string) => {
-    const chId = '0x534e5f5345504f4c4941';
 
     const {contractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
 
@@ -95,7 +93,7 @@ export const getDeployHash = (publicKey: string) => {
         salt,
         1n,
         1000000000000000n,
-        chId,
+        chainId,
         0n
     );
 
@@ -115,20 +113,6 @@ export async function deployAccount(publicKey: string, signHash: string, signCou
         const {contractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
 
         console.log("signHash = ", signHash, contractAddress);
-
-
-// 直接获取webauthn 的sign
-// Signature:
-// 0x30 ASN.1SEQUENCE
-// 46 total length
-// 02 int type
-// 21 length
-// 00
-// a05b2d3c4a1103161660d6afbd8702458806bbced2513276a5665e3d4036dd93   r
-// 02 int type
-// 21 length
-// 00
-// e82b3cfcee889defe1b75966cef7a7f26fce87b7882ffa376c068346b8737d5e   s
         const {rHex, sHex} = extractRSFromSignature(signHash);
         console.log("rHex = ", rHex);
         console.log("sHex = ", sHex);
@@ -137,7 +121,7 @@ export async function deployAccount(publicKey: string, signHash: string, signCou
         const [rHexFirstHalf, rHexSecondHalf] = splitHexTo128Bits(rHex);
         const [sHexFirstHalf, sHexSecondHalf] = splitHexTo128Bits(sHex);
 
-// 将分割后的部分组合成一个数组
+        // 将分割后的部分组合成一个数组
         const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, 1 , signCount];
 
         console.log("signatureArray = ", hexPartsArray);
@@ -164,5 +148,115 @@ export async function deployAccount(publicKey: string, signHash: string, signCou
 
     } catch (error) {
         console.error("部署账户或签名过程中出错：", error);
+    }
+}
+
+export async function invokeTx(publicKey: string, signHash: string, signCount: number) {
+    const SimpleStorageAddress = '0x4ef8da68c94b71859f3b34cdce6b6128f03b10b568b523551cc28973e6f2f2a';
+    try {
+        const {contractAddress: AAcontractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
+        const transactions = [
+            {
+                contractAddress: SimpleStorageAddress,
+                entrypoint: 'set',
+                calldata: [1]
+            }
+        ];
+        // 1 must be string
+        // const mycalldata = transaction.getExecuteCalldata(transactions, '1');
+        const mycalldata = transaction.getExecuteCalldata(transactions, '1');
+
+        console.log("mycalldata = ", mycalldata, signCount);
+
+        // test argent hash, is ok
+        /*
+        const invokeTransctionHash_argent = hash.calculateTransactionHash(
+            '0x7fc931e299f9a546ac8318ce904e60d79edb516270c858bbf0361cff01430a8',
+            1n,
+            mycalldata,
+            1500000000000000n,
+            chId,
+            11n
+        );
+        console.log("invokeTransctionHash_argent = ", invokeTransctionHash_argent);
+        */
+
+        // 获取交易hash  calldata is RawCalldata,RawCalldata BigNumberish array, use CallData.compile() to convert to Calldata
+        const invokeTransctionHash = hash.calculateTransactionHash(
+            AAcontractAddress,
+            1n,
+            mycalldata,
+            1500000000000000n,
+            chainId,
+            2n
+        );
+
+        const invokeHash = invokeTransctionHash.startsWith('0x') ? invokeTransctionHash.substring(2) : invokeTransctionHash;
+
+        console.log("invokeHash = ", invokeHash);
+
+        const {rHex, sHex} = extractRSFromSignature(signHash);
+
+
+        console.log("rHex = ", rHex);
+        console.log("sHex = ", sHex);
+
+        // 对r和s的16进制表示进行分割
+        const [rHexFirstHalf, rHexSecondHalf] = splitHexTo128Bits(rHex);
+        const [sHexFirstHalf, sHexSecondHalf] = splitHexTo128Bits(sHex);
+
+
+        /*
+        // 从十六进制字符串创建公钥点
+        const keyPair = rec.keyFromPublic(AApublicKey, 'hex');
+        const publicKeyPoint = keyPair.getPublic();
+
+        // 获取y坐标，并确定其奇偶性
+        const yParity = publicKeyPoint.getY().isOdd();
+
+
+        console.log("yParity = ", yParity);
+        */
+
+
+        // 将分割后的部分组合成一个数组
+        const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, 1, signCount];
+
+        console.log("signatureArray = ", hexPartsArray);
+
+        // 准备details对象
+        const details = {
+            maxFee:  1500000000000000n, // 设定最大费用，根据需要调整, must be the same as hash
+            version: 1n, // 合约版本
+            nonce: 2n, // 随机数，根据需要调整
+        };
+
+//    const myCall = myTestContract.populate("transfer", [MywalletAddress, 100000]);
+
+        // invoke erc20 Contract 函数
+        /*
+        const invokeTransaction = {
+          contractAddress: ERC20contractAddress,
+          entrypoint: 'transfer',
+          calldata: mycalldata,
+          signature: hexPartsArray // 需要字符串数据格式
+        };
+        */
+        // invoke simple storage Contract 函数  calldata is Calldata (decimal-string array)
+        const invokeTransaction = {
+            contractAddress: AAcontractAddress,
+            calldata: mycalldata,
+            signature: hexPartsArray // 需要字符串数据格式
+        };
+        console.log("**********:", invokeTransaction, details);
+
+
+        //const res = await myTestContract.increase_balance(myCall.calldata);
+        // add ,"1" after AAprivateKey if this account is not a Cairo 0 contract
+        const response = await provider.invokeFunction(invokeTransaction, details);
+        console.log('成功，交易信息：', response);
+
+    } catch (error) {
+        console.error("出错：", error);
     }
 }

@@ -18,16 +18,15 @@ import {useRouter} from "next/navigation";
 export default function Wallet() {
     const router = useRouter();
     const [data] = useLocalStorage<any>(GlobalConfig.mossWalletKey, null);
+    const account = data?.account;
 
     const { data: banlanceData } = useSWR(['balance', data?.account?.contractAddress], () => queryTokenBalance(data?.account?.contractAddress));
 
-    const account = data?.account;
 
     const { data: contractInfo } = useSWR(['contractInfo', data?.account?.contractAddress], () => queryContractInfo(data?.account?.contractAddress));
 
 
     const handleDeploy = async () => {
-        //
         const deployHash = getDeployHash(account.publicKey);
 
         const publicKeyCredentialRequestOptions = {
