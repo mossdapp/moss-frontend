@@ -9,7 +9,7 @@ import {
     CallData,
     RpcProvider,
     transaction,
-    Contract
+    Contract, Call
 } from "starknet";
 import {extractRSFromSignature} from "@/core/utils";
 
@@ -53,7 +53,6 @@ const getNonce = async (address: string) => {
             })
         });
         const data = await res.json();
-        console.log(data, 'info')
         return parseInt(data.result, 16);
     } catch (e) {
         console.error(e);
@@ -134,24 +133,25 @@ export const getDeployHash = async (publicKey: string) => {
     return deployHash;
 }
 
-export const getInvokeHash = async (publicKey: string) => {
-    const SimpleStorageAddress = '0x4ef8da68c94b71859f3b34cdce6b6128f03b10b568b523551cc28973e6f2f2a';
+// const SimpleStorageAddress = '0x4ef8da68c94b71859f3b34cdce6b6128f03b10b568b523551cc28973e6f2f2a';
+//
+// const transactions = [
+//     {
+//         contractAddress: SimpleStorageAddress,
+//         entrypoint: 'set',
+//         calldata: [1]
+//     }
+// ];
+
+export const getInvokeHash = async (publicKey: string, transactions: Call[]) => {
     const {contractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
-    const transactions = [
-        {
-            contractAddress: SimpleStorageAddress,
-            entrypoint: 'set',
-            calldata: [1]
-        }
-    ];
+
     // 1 must be string
     const mycalldata = transaction.getExecuteCalldata(transactions, '1');
 
     const nonce = await getNonce(contractAddress);
 
-    console.log("mycalldata = ", mycalldata, nonce);
-
-
+    console.log("mycalldata = ", transactions, mycalldata, nonce);
 
     // 获取交易hash  calldata is RawCalldata,RawCalldata BigNumberish array, use CallData.compile() to convert to Calldata
     const invokeTransctionHash = hash.calculateTransactionHash(
@@ -219,20 +219,9 @@ export async function deployAccount(publicKey: string, signHash: string, signCou
     }
 }
 
-export async function invokeTx(publicKey: string, signHash: string, signCount: number) {
-
-    const SimpleStorageAddress = '0x4ef8da68c94b71859f3b34cdce6b6128f03b10b568b523551cc28973e6f2f2a';
+export async function invokeTx(publicKey: string, signHash: string, signCount: number, transactions: Call[]) {
     try {
         const {contractAddress: AAcontractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
-
-        await getNonce(AAcontractAddress);
-        const transactions = [
-            {
-                contractAddress: SimpleStorageAddress,
-                entrypoint: 'set',
-                calldata: [1]
-            }
-        ];
         // 1 must be string
         const mycalldata = transaction.getExecuteCalldata(transactions, '1');
 
@@ -259,17 +248,6 @@ export async function invokeTx(publicKey: string, signHash: string, signCount: n
             version: 1n, // 合约版本
             nonce: nonce, // 随机数，根据需要调整
         };
-
-
-        // invoke erc20 Contract 函数
-        /*
-        const invokeTransaction = {
-          contractAddress: ERC20contractAddress,
-          entrypoint: 'transfer',
-          calldata: mycalldata,
-          signature: hexPartsArray // 需要字符串数据格式
-        };
-        */
         // invoke simple storage Contract 函数  calldata is Calldata (decimal-string array)
         const invokeTransaction = {
             contractAddress: AAcontractAddress,
@@ -278,12 +256,11 @@ export async function invokeTx(publicKey: string, signHash: string, signCount: n
         };
         console.log("**********:", invokeTransaction, details);
 
-
         //const res = await myTestContract.increase_balance(myCall.calldata);
         // add ,"1" after AAprivateKey if this account is not a Cairo 0 contract
         const response = await provider.invokeFunction(invokeTransaction, details);
         console.log('成功，交易信息：', response);
-
+        return response;
     } catch (error) {
         console.error("出错：", error);
     }

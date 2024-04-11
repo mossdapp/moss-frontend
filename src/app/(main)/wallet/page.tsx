@@ -11,7 +11,7 @@ import {queryContractInfo, queryTokenBalance} from "@/services/wallet";
 import {shortenAddress} from "@/utils/common";
 import {CopyText} from "@/components/CopyText";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
-import {RocketIcon} from "lucide-react";
+import {Activity, RocketIcon} from "lucide-react";
 import {useRouter} from "next/navigation";
 
 
@@ -68,7 +68,7 @@ export default function Wallet() {
 
     return (
         <div>
-            <div className={'text-center font-bold text-lg'}>
+            <div className={'text-center font-bold text-lg relative'}>
                 Wallet
             </div>
             <div className={'flex justify-center text-foreground text-md font-bold mt-5'}>
@@ -89,6 +89,10 @@ export default function Wallet() {
                 ) : null
             }
 
+            <div className={'mt-8 flex items-center justify-center gap-5'}>
+
+                <Activity className={'text-primary/80'} />
+            </div>
             <div className={'mt-8'}>
                 <div className={'font-bold text-lg'}>
                     Tokens
