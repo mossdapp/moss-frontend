@@ -3,8 +3,9 @@ import {Copy} from "lucide-react";
 import {ReactNode, useEffect} from "react";
 import {useCopyToClipboard} from "react-use";
 import toast from "react-hot-toast";
+import {cn} from "@/lib/utils";
 
-export const CopyText = ({text, children}: {text: string; children: ReactNode}) => {
+export const CopyText = ({text, children, className}: {text: string; children: ReactNode;className?: string}) => {
     const [state, copyToClipboard] = useCopyToClipboard();
 
     useEffect(() => {
@@ -16,7 +17,7 @@ export const CopyText = ({text, children}: {text: string; children: ReactNode}) 
         }
     }, [state]);
     return (
-        <div className={'text-muted-foreground flex items-center gap-2'}>
+        <div className={cn('text-muted-foreground flex items-center gap-2', className)}>
             {children}
             <Copy className={'cursor-pointer'} size={16} onClick={() => copyToClipboard(text!)}/>
         </div>

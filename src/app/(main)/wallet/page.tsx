@@ -11,7 +11,7 @@ import {queryContractInfo, queryTokenBalance} from "@/services/wallet";
 import {shortenAddress} from "@/utils/common";
 import {CopyText} from "@/components/CopyText";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
-import {Activity, RocketIcon} from "lucide-react";
+import {Activity, ArrowDown, RocketIcon} from "lucide-react";
 import {useRouter} from "next/navigation";
 
 
@@ -77,7 +77,7 @@ export default function Wallet() {
                 </CopyText>
             </div>
             {
-                !contractInfo?.data ? (
+                contractInfo && !contractInfo?.data ? (
                         <Alert className={'mt-8'} variant="destructive">
                             <RocketIcon className="h-4 w-4" />
                             <AlertTitle>Deploy!</AlertTitle>
@@ -90,8 +90,14 @@ export default function Wallet() {
             }
 
             <div className={'mt-8 flex items-center justify-center gap-5'}>
-
-                <Activity className={'text-primary/80'} />
+                <Button variant={'outline'} className={'gap-2'} onClick={() => router.push('/deposit')}>
+                    <ArrowDown />
+                    Deposit
+                </Button>
+                <Button variant={'outline'} className={'gap-2'} onClick={() => router.push('/activity')}>
+                    <Activity />
+                    Activity
+                </Button>
             </div>
             <div className={'mt-8'}>
                 <div className={'font-bold text-lg'}>

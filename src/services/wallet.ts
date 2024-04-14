@@ -81,7 +81,7 @@ export async function queryContractInfo(contractAddress: string) {
                 }
             }
         }
-        const response = await fetch(API, {
+            const response = await fetch(API, {
             method: 'POST',
             headers: {
                 'accept': 'application/json',
@@ -128,6 +128,14 @@ export async function getTransactions(address: string){
         const res = await fetch(API, {
             "body": JSON.stringify(body),
             "method": "POST",
+            headers: {
+                'accept': 'application/json',
+                'content-type': 'application/json',
+                'cache-control': 'no-cache',
+                'pragma': 'no-cache'
+            },
+            mode: 'cors',
+            credentials: 'omit'
         });
         const data = await res.json();
         return data;
