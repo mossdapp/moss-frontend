@@ -6,7 +6,7 @@ import {
     Call
 } from "starknet";
 import {extractRSFromSignature, padHexTo256Bits, splitHexTo128Bits} from "@/core/utils";
-import {GlobalConfig} from "@/constants";
+import {ENVS, GlobalConfig} from "@/constants";
 
 export const provider = new RpcProvider({nodeUrl: 'https://starknet-sepolia.public.blastapi.io'});
 
@@ -60,7 +60,7 @@ export const getAccountByPublicKey = (publicKey: string) => {
     ]);
 
 
-    const AAaccountClassHash = '0x02c39894eaa4f7c5cd1c0fa62f2cac6396bb2126514337433054c068520b4994';
+    const AAaccountClassHash = ENVS.ACCOUNT_CLASS_HASH;
     console.log('Customized account class hash =', AAaccountClassHash);
 
     const AAcontractAddress = hash.calculateContractAddressFromHash(

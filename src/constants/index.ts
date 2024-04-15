@@ -5,11 +5,16 @@ import NFTMarketImg from '@/assets/NFTMarket.webp';
 import SocialTagImg from '@/assets/SocialTag.webp';
 import TokenManageImg from '@/assets/TokenManage.webp';
 
+export const ENVS = {
+    ACCOUNT_CLASS_HASH: process.env.NEXT_PUBLIC_ACCOUNT_CLASS_HASH as string,
+}
+
 
 export const GlobalConfig = {
     mossWalletKey: 'moss:wallet',
     alchemyAPI: 'https://starknet-sepolia.g.alchemy.com/v2/GQYPecngmX2a1VBVYq2V9hL3FIMFqoHk',
     blastAPI: 'https://starknet-sepolia.public.blastapi.io/rpc/v0_7',
+    scanUrl: 'https://sepolia.starkscan.co/tx/'
 }
 
 
