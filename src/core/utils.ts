@@ -3,21 +3,21 @@
 import {fromBER} from "asn1js";
 import {PublicKeyInfo} from "pkijs";
 
-function byteArrayToHexString(byteArray: ArrayBuffer) {
-    return Array.from(byteArray, function(byte) {
+function byteArrayToHexString(byteArray: any) {
+    return Array.from(byteArray, function(byte: any) {
         return ('0' + (byte & 0xFF).toString(16)).slice(-2);
     }).join('');
 }
 
-export function bufferDecodeHexString(hexString) {
+export function bufferDecodeHexString(hexString: string) {
     // 移除可能存在的0x前缀
     hexString = hexString.replace(/^0x/, '');
 
     // 确保字符串长度为64字符，对应于256位，不足处补零
-    let paddedHexString = hexString.padStart(64, '0');
+    let paddedHexString = hexString.padStart(64, '0') as string;
 
     // 转换为Uint8Array
-    return new Uint8Array(paddedHexString.match(/[\da-f]{2}/gi).map(byte => parseInt(byte, 16)));
+    return new Uint8Array(paddedHexString.match(/[\da-f]{2}/gi)!.map(byte => parseInt(byte, 16)));
 }
 
 export function extractPublicKey(arrayBuffer: ArrayBuffer) {
@@ -67,4 +67,25 @@ export function extractRSFromSignature(signatureHex: string) {
     const sHex = signatureHex.substring(offset, offset + sLength * 2);
 
     return { rHex, sHex };
+}
+
+// 将16进制字符串填充到64个字符
+export function padHexTo256Bits(hexString: string) {
+    // 检查是否有'0x'前缀，如果有，先去除
+    const cleanHex = hexString.startsWith('0x') ? hexString.substring(2) : hexString;
+    console.log(cleanHex, 'hh')
+    // 计算需要填充的0的数量
+    const paddingLength = 64 - cleanHex.length;
+    // 生成填充用的0字符串
+    const padding = '0'.repeat(paddingLength);
+    // 返回填充后的字符串，确保它有'0x'前缀
+    return '0x' + padding + cleanHex;
+}
+
+// 分割16进制字符串到两个128位的部分
+export function splitHexTo128Bits(hexString: string) {
+    const paddedHex = padHexTo256Bits(hexString);
+    const firstHalf = paddedHex.substring(0, 34); // 包括'0x'，所以是34个字符
+    const secondHalf = '0x' + paddedHex.substring(34);
+    return [firstHalf, secondHalf];
 }

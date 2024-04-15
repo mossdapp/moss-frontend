@@ -1,46 +1,20 @@
 import {
-    Signer,
-    constants,
-    ec,
-    json,
-    stark,
-    Provider,
     hash,
     CallData,
     RpcProvider,
     transaction,
-    Contract, Call
+    Call
 } from "starknet";
-import {extractRSFromSignature} from "@/core/utils";
-
-// 将16进制字符串填充到64个字符
-function padHexTo256Bits(hexString: string) {
-    // 检查是否有'0x'前缀，如果有，先去除
-    const cleanHex = hexString.startsWith('0x') ? hexString.substring(2) : hexString;
-    console.log(cleanHex, 'hh')
-    // 计算需要填充的0的数量
-    const paddingLength = 64 - cleanHex.length;
-    // 生成填充用的0字符串
-    const padding = '0'.repeat(paddingLength);
-    // 返回填充后的字符串，确保它有'0x'前缀
-    return '0x' + padding + cleanHex;
-}
-
-// 分割16进制字符串到两个128位的部分
-function splitHexTo128Bits(hexString: string) {
-    const paddedHex = padHexTo256Bits(hexString);
-    const firstHalf = paddedHex.substring(0, 34); // 包括'0x'，所以是34个字符
-    const secondHalf = '0x' + paddedHex.substring(34);
-    return [firstHalf, secondHalf];
-}
+import {extractRSFromSignature, padHexTo256Bits, splitHexTo128Bits} from "@/core/utils";
+import {GlobalConfig} from "@/constants";
 
 export const provider = new RpcProvider({nodeUrl: 'https://starknet-sepolia.public.blastapi.io'});
 
-const chainId = '0x534e5f5345504f4c4941';
+const chainId = '0x534e5f5345504f4c4941'; //sepolia
 
 const getNonce = async (address: string) => {
     try {
-        const res = await fetch('https://starknet-sepolia.public.blastapi.io/rpc/v0_7', {
+        const res = await fetch(GlobalConfig.blastAPI, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -56,7 +30,7 @@ const getNonce = async (address: string) => {
         return parseInt(data.result, 16);
     } catch (e) {
         console.error(e);
-        return 0n;
+        return 0;
     }
 }
 
@@ -110,17 +84,16 @@ export const getAccountByPublicKey = (publicKey: string) => {
 export const getDeployHash = async (publicKey: string) => {
     const {contractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
 
-    const nonce = await getNonce(contractAddress);
     // 获取交易hash
     const deployTransctionHash = hash.calculateDeployAccountTransactionHash(
         contractAddress,
         classHash,
         callData,
         salt,
-        1n,
-        1000000000000000n,
-        chainId,
-        nonce
+        1,
+        1000000000000000,
+        chainId as any,
+        0
     );
 
     let deployHash = deployTransctionHash.startsWith('0x') ? deployTransctionHash.substring(2) : deployTransctionHash;
@@ -156,10 +129,10 @@ export const getInvokeHash = async (publicKey: string, transactions: Call[]) => 
     // 获取交易hash  calldata is RawCalldata,RawCalldata BigNumberish array, use CallData.compile() to convert to Calldata
     const invokeTransctionHash = hash.calculateTransactionHash(
         contractAddress,
-        1n,    // version
+        1,    // version
         mycalldata,
-        1500000000000000n,  //maxfee
-        chainId,
+        1500000000000000,  //maxfee
+        chainId as any,
         nonce
     );
 
@@ -196,9 +169,9 @@ export async function deployAccount(publicKey: string, signHash: string, signCou
 
         // 准备details对象
         const details = {
-            maxFee:  1000000000000000n, // 设定最大费用，根据需要调整
-            version: 1n, // 合约版本
-            nonce: 0n, // 随机数，根据需要调整
+            maxFee:  1000000000000000, // 设定最大费用，根据需要调整
+            version: 1, // 合约版本
+            nonce: 0, // 随机数，根据需要调整
         };
 
         // 调用 deployAccountContract 函数
@@ -206,7 +179,7 @@ export async function deployAccount(publicKey: string, signHash: string, signCou
             classHash: classHash,
             constructorCalldata: callData,
             addressSalt: salt,
-            signature: hexPartsArray, // 需要字符串数据格式
+            signature: hexPartsArray as any, // 需要字符串数据格式
         };
         console.log("**********:", deployTransaction, details);
 
@@ -244,15 +217,15 @@ export async function invokeTx(publicKey: string, signHash: string, signCount: n
 
         // 准备details对象
         const details = {
-            maxFee:  1500000000000000n, // 设定最大费用，根据需要调整, must be the same as hash function
-            version: 1n, // 合约版本
+            maxFee:  1500000000000000, // 设定最大费用，根据需要调整, must be the same as hash function
+            version: 1, // 合约版本
             nonce: nonce, // 随机数，根据需要调整
         };
         // invoke simple storage Contract 函数  calldata is Calldata (decimal-string array)
         const invokeTransaction = {
             contractAddress: AAcontractAddress,
             calldata: mycalldata,
-            signature: hexPartsArray // 需要字符串数据格式
+            signature: hexPartsArray as any // 需要字符串数据格式
         };
         console.log("**********:", invokeTransaction, details);
 

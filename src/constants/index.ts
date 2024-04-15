@@ -8,7 +8,8 @@ import TokenManageImg from '@/assets/TokenManage.webp';
 
 export const GlobalConfig = {
     mossWalletKey: 'moss:wallet',
-    alchemyAPI: 'https://starknet-sepolia.g.alchemy.com/v2/GQYPecngmX2a1VBVYq2V9hL3FIMFqoHk'
+    alchemyAPI: 'https://starknet-sepolia.g.alchemy.com/v2/GQYPecngmX2a1VBVYq2V9hL3FIMFqoHk',
+    blastAPI: 'https://starknet-sepolia.public.blastapi.io/rpc/v0_7',
 }
 
 

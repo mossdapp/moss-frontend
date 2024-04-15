@@ -15,7 +15,7 @@ export  default function DepositPage() {
         <Container>
             <TabBar title={'Deposit'}/>
             <div className={'p-8 flex flex-col justify-center items-center'}>
-                <QRCode value={account?.contractAddress} />
+                <QRCode value={account?.contractAddress || ''} />
                 <div className={'mt-6'}>
                     <CopyText text={account?.contractAddress} className={'block'}>
                         <div className={'break-all text-gray-600'}>

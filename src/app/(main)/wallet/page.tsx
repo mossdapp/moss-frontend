@@ -13,6 +13,7 @@ import {CopyText} from "@/components/CopyText";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Activity, ArrowDown, RocketIcon} from "lucide-react";
 import {useRouter} from "next/navigation";
+import toast from "react-hot-toast";
 
 
 export default function Wallet() {
@@ -61,7 +62,8 @@ export default function Wallet() {
         console.log(`signCount: ${signCount}`);
         console.log(signatureHex);
 
-        deployAccount(account.publicKey, signatureHex.slice(2), signCount);
+        await deployAccount(account.publicKey, signatureHex.slice(2), signCount);
+        toast.success('Deploy transaction submit successfully');
     }
 
     console.log(contractInfo);
