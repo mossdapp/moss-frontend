@@ -2,6 +2,7 @@
 // 假设 `arrayBuffer` 是包含SPKI公钥的ArrayBuffer
 import {fromBER} from "asn1js";
 import {PublicKeyInfo} from "pkijs";
+import BigNumber from "bignumber.js";
 
 function byteArrayToHexString(byteArray: any) {
     return Array.from(byteArray, function(byte: any) {
@@ -88,4 +89,29 @@ export function splitHexTo128Bits(hexString: string) {
     const firstHalf = paddedHex.substring(0, 34); // 包括'0x'，所以是34个字符
     const secondHalf = '0x' + paddedHex.substring(34);
     return [firstHalf, secondHalf];
+}
+
+export function splitAmountIntoU128Parts(amount: bigint) {
+    const amountWei = new BigNumber(amount.toString());
+    const maxU256 = new BigNumber("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+    const maxU128 = new BigNumber("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+
+    if (amountWei.gt(maxU256)) {
+        console.error("The number exceeds the u256 limit.");
+        return;
+    }
+
+    // 高位 (先取整个 u256，然后通过除以 2**128 来右移 128 位)
+    const high = amountWei.shiftedBy(128);
+
+    // 低位 (通过与 u128 的最大值进行 AND 操作得到低 128 位)
+    const low = amountWei.mod(maxU128);
+
+    console.log(`High part: ${high.toString()}`);
+    console.log(`Low part: ${low.toString()}`);
+
+    const result = [low.toString(), high.toString()];
+    console.log("Combined u128 parts:", result);
+
+    return result;
 }

@@ -193,48 +193,44 @@ export async function deployAccount(publicKey: string, signHash: string, signCou
 }
 
 export async function invokeTx(publicKey: string, signHash: string, signCount: number, transactions: Call[]) {
-    try {
-        const {contractAddress: AAcontractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
-        // 1 must be string
-        const mycalldata = transaction.getExecuteCalldata(transactions, '1');
+    const {contractAddress: AAcontractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
+    // 1 must be string
+    const mycalldata = transaction.getExecuteCalldata(transactions, '1');
 
-        const nonce = await getNonce(AAcontractAddress);
-        const {rHex, sHex} = extractRSFromSignature(signHash);
-
-
-        console.log("rHex = ", rHex);
-        console.log("sHex = ", sHex);
-
-        // 对r和s的16进制表示进行分割
-        const [rHexFirstHalf, rHexSecondHalf] = splitHexTo128Bits(rHex);
-        const [sHexFirstHalf, sHexSecondHalf] = splitHexTo128Bits(sHex);
+    const nonce = await getNonce(AAcontractAddress);
+    const {rHex, sHex} = extractRSFromSignature(signHash);
 
 
-        // 将分割后的部分组合成一个数组
-        const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, 1, signCount];
+    console.log("rHex = ", rHex);
+    console.log("sHex = ", sHex);
 
-        console.log("signatureArray = ", hexPartsArray);
+    // 对r和s的16进制表示进行分割
+    const [rHexFirstHalf, rHexSecondHalf] = splitHexTo128Bits(rHex);
+    const [sHexFirstHalf, sHexSecondHalf] = splitHexTo128Bits(sHex);
 
-        // 准备details对象
-        const details = {
-            maxFee:  1500000000000000, // 设定最大费用，根据需要调整, must be the same as hash function
-            version: 1, // 合约版本
-            nonce: nonce, // 随机数，根据需要调整
-        };
-        // invoke simple storage Contract 函数  calldata is Calldata (decimal-string array)
-        const invokeTransaction = {
-            contractAddress: AAcontractAddress,
-            calldata: mycalldata,
-            signature: hexPartsArray as any // 需要字符串数据格式
-        };
-        console.log("**********:", invokeTransaction, details);
 
-        //const res = await myTestContract.increase_balance(myCall.calldata);
-        // add ,"1" after AAprivateKey if this account is not a Cairo 0 contract
-        const response = await provider.invokeFunction(invokeTransaction, details);
-        console.log('成功，交易信息：', response);
-        return response;
-    } catch (error) {
-        console.error("出错：", error);
-    }
+    // 将分割后的部分组合成一个数组
+    const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, 1, signCount];
+
+    console.log("signatureArray = ", hexPartsArray);
+
+    // 准备details对象
+    const details = {
+        maxFee:  1500000000000000, // 设定最大费用，根据需要调整, must be the same as hash function
+        version: 1, // 合约版本
+        nonce: nonce, // 随机数，根据需要调整
+    };
+    // invoke simple storage Contract 函数  calldata is Calldata (decimal-string array)
+    const invokeTransaction = {
+        contractAddress: AAcontractAddress,
+        calldata: mycalldata,
+        signature: hexPartsArray as any // 需要字符串数据格式
+    };
+    console.log("**********:", invokeTransaction, details);
+
+    //const res = await myTestContract.increase_balance(myCall.calldata);
+    // add ,"1" after AAprivateKey if this account is not a Cairo 0 contract
+    const response = await provider.invokeFunction(invokeTransaction, details);
+    console.log('成功，交易信息：', response);
+    return response;
 }

@@ -42,6 +42,7 @@
     "@simplewebauthn/server": "^9.0.3",
     "asn1js": "^3.0.5",
     "axios": "^1.6.8",
+    "bignumber.js": "^9.1.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "cmdk": "^1.0.0",

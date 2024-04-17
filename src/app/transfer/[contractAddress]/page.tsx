@@ -4,23 +4,25 @@ import {TabBar} from "@/components/TabBar";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Button} from "@/components/ui/button";
-import {useParams, useSearchParams} from "next/navigation";
+import {useParams, useRouter, useSearchParams} from "next/navigation";
 import {useLocalStorage} from "react-use";
 import {GlobalConfig} from "@/constants";
 import {getInvokeHash, invokeTx} from "@/core/account";
-import {arrayBufferToHex, bufferDecodeHexString} from "@/core/utils";
+import {arrayBufferToHex, bufferDecodeHexString, splitAmountIntoU128Parts} from "@/core/utils";
 import useSWR from "swr";
 import {queryTokenBalance} from "@/services/wallet";
 import {useState} from "react";
 import {getDecimals} from "@/core/web3";
 import {parseUnits} from "viem";
 import toast from "react-hot-toast";
+import {cairo} from "starknet";
 
 
 export default function TransferPage() {
     const searchParams = useSearchParams();
     const { contractAddress } = useParams();
     const symbol = searchParams.get('symbol');
+    const router = useRouter();
 
     const [data] = useLocalStorage<any>(GlobalConfig.mossWalletKey, null);
     const account = data?.account;
@@ -35,19 +37,21 @@ export default function TransferPage() {
     const handleClick = async () => {
         try {
             const decimals = await getDecimals(contractAddress as string);
-            const amountWei = parseUnits(amount, Number(decimals)).toString();
+            const amountWei = parseUnits(amount, Number(decimals));
+            const res = cairo.uint256(amountWei.toString());
+            console.log(res, 'rr')
             const transactions = [
                 {
                     contractAddress: contractAddress as string,
                     entrypoint: 'transfer',
-                    calldata: [recipient, amountWei, '0']
+                    calldata: [recipient, res.low, res.high]
                 }
             ];
 
-            const deployHash = await getInvokeHash(account.publicKey, transactions);
+            const hash = await getInvokeHash(account.publicKey, transactions);
 
             const publicKeyCredentialRequestOptions = {
-                challenge: bufferDecodeHexString(deployHash),
+                challenge: bufferDecodeHexString(hash),
                 rpId: window.location.hostname, // 确保与当前页面的域名相匹配
             }
             const cred = await navigator.credentials.get({publicKey: publicKeyCredentialRequestOptions}) as any;
@@ -66,7 +70,9 @@ export default function TransferPage() {
             const response = await invokeTx(account.publicKey, signatureHex.slice(2), signCount, transactions);
             console.log(response) //transaction_hash
             toast('Transaction submitted successfully');
+            router.back();
         } catch (e:any) {
+            console.error("交易出错：", e);
             toast.error(e.message);
         }
     }
