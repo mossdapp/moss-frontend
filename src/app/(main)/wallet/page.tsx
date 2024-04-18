@@ -1,6 +1,6 @@
 'use client';
 import {useLocalStorage} from "react-use";
-import {GlobalConfig} from "@/constants";
+import {GlobalConfig, TokenUrlMap} from "@/constants";
 import {useEffect} from "react";
 import { Button } from "@/components/ui/button";
 import {deployAccount, getDeployHash} from "@/core/account";
@@ -14,6 +14,7 @@ import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Activity, ArrowDown, RocketIcon} from "lucide-react";
 import {useRouter} from "next/navigation";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 
 export default function Wallet() {
@@ -72,6 +73,10 @@ export default function Wallet() {
         <div>
             <div className={'text-center font-bold text-lg relative'}>
                 Wallet
+
+                <Link href={'/faucet'} className={'right-0 absolute top-0 text-sm text-gray-400'}>
+                    Faucet
+                </Link>
             </div>
             <div className={'flex justify-center text-foreground text-md font-bold mt-5'}>
                 <CopyText text={account?.contractAddress}>
@@ -105,14 +110,14 @@ export default function Wallet() {
                 <div className={'font-bold text-lg'}>
                     Tokens
                 </div>
-                <div className={'mt-4'}>
+                <div className={'mt-4 space-y-6'}>
                     {
                         banlanceData?.data?.tokenBalancesByOwnerAddress.map((item: any) => {
                             return (
                                 <div key={item.id} className={'flex items-center justify-between cursor-pointer'} onClick={() => {
                                     router.push(`/transfer/${item.token_contract_address}?symbol=${item.contract_token_contract.symbol}`)
                                 }}>
-                                    <img className={'w-3'} src={item.contract_token_contract.icon_url}
+                                    <img className={'h-5'} src={item.contract_token_contract.icon_url || TokenUrlMap.ERC20}
                                          alt={item.contract_token_contract.symbol}/>
                                     <span>{item.contract_token_contract.symbol}</span>
                                     <span>{item.balance_display}</span>

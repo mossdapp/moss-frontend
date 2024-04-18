@@ -5,7 +5,13 @@ import {
     transaction,
     Call
 } from "starknet";
-import {extractRSFromSignature, padHexTo256Bits, splitHexTo128Bits} from "@/core/utils";
+import {
+    arrayBufferToHex,
+    bufferDecodeHexString,
+    extractRSFromSignature,
+    padHexTo256Bits,
+    splitHexTo128Bits
+} from "@/core/utils";
 import {ENVS, GlobalConfig} from "@/constants";
 
 export const provider = new RpcProvider({nodeUrl: 'https://starknet-sepolia.public.blastapi.io'});
@@ -232,5 +238,29 @@ export async function invokeTx(publicKey: string, signHash: string, signCount: n
     // add ,"1" after AAprivateKey if this account is not a Cairo 0 contract
     const response = await provider.invokeFunction(invokeTransaction, details);
     console.log('成功，交易信息：', response);
+    return response;
+}
+
+export const writeContract = async (publicKey: string, transactions: Call[]) => {
+    const hash = await getInvokeHash(publicKey, transactions);
+
+    const publicKeyCredentialRequestOptions = {
+        challenge: bufferDecodeHexString(hash),
+        rpId: window.location.hostname, // 确保与当前页面的域名相匹配
+    }
+    const cred = await navigator.credentials.get({publicKey: publicKeyCredentialRequestOptions}) as any;
+
+    const signature = cred?.response.signature;
+    const signatureHex = arrayBufferToHex(signature);
+    const authenticatorData = cred?.response.authenticatorData;
+    const authenticatorDataHex = arrayBufferToHex(authenticatorData);
+
+    // 获取最后四个字节的十六进制字符串
+    const lastFourBytesHex = authenticatorDataHex.slice(-10);  // 获取最后8个字符
+
+    // 解析十六进制为整数，假设大端序
+    const signCount = parseInt(lastFourBytesHex, 16);  // 只取最后两位数
+
+    const response = await invokeTx(publicKey, signatureHex.slice(2), signCount, transactions);
     return response;
 }
