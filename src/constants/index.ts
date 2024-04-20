@@ -26,28 +26,33 @@ export const TokenUrlMap = {
 }
 
 export const DappList = [
-    {
-        name: 'Dex',
-        icon: DexImg.src,
-    },
+    // {
+    //     name: 'Dex',
+    //     icon: DexImg.src,
+    // },
     {
         name: 'Legacy',
         icon: LegacyImg.src,
+        classHash: '0x07a48c905bfacb96fd20cfe57f5092d5396cdde0a48cd645a8215dc924c62ba1'
     },
     {
         name: 'NFTManage',
         icon: NFTManageImg.src,
+        classHash: '0x052144d89fb1c3ed153a048c7795999172ce953062ff181353469ad46ded015f'
     },
     {
         name: 'NFTMarket',
         icon: NFTMarketImg.src,
+        classHash: '0x016c18999acfb988bbb58187ba926e62920981993acc82229a825dad253ef24c'
     },
     {
         name: 'SocialTag',
         icon: SocialTagImg.src,
+        classHash: '0x008343ff1b5f03167899f6d9020720e16492d0d1eefc5026f9d12a0de0c3ef71'
     },
     {
         name: 'TokenManage',
         icon: TokenManageImg.src,
+        classHash: '0x032093a8d8e0a79801d1e2320e306e1334b5dda28bff3129797ce9fbd9209d26'
     }
 ]

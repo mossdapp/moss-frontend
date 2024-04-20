@@ -3,7 +3,7 @@ import {
     CallData,
     RpcProvider,
     transaction,
-    Call
+    Call, shortString
 } from "starknet";
 import {
     arrayBufferToHex,
@@ -16,7 +16,8 @@ import {ENVS, GlobalConfig} from "@/constants";
 
 export const provider = new RpcProvider({nodeUrl: 'https://starknet-sepolia.public.blastapi.io'});
 
-const chainId = '0x534e5f5345504f4c4941'; //sepolia
+const chainId = shortString.encodeShortString('SN_SEPOLIA'); //'0x534e5f5345504f4c4941'; //sepolia
+
 
 const getNonce = async (address: string) => {
     try {
@@ -144,9 +145,6 @@ export const getInvokeHash = async (publicKey: string, transactions: Call[]) => 
 
     let invokeHash = invokeTransctionHash.startsWith('0x') ? invokeTransctionHash.substring(2) : invokeTransctionHash;
 
-    console.log("invokeHash = ", invokeHash);
-
-
     // 确保deployHash为64位长度
     invokeHash = invokeHash.padStart(64, '0');
 
@@ -156,46 +154,42 @@ export const getInvokeHash = async (publicKey: string, transactions: Call[]) => 
 }
 
 export async function deployAccount(publicKey: string, signHash: string, signCount: number) {
-    try {
-        const {contractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
+    const {contractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
 
-        console.log("signHash = ", signHash, contractAddress);
-        const {rHex, sHex} = extractRSFromSignature(signHash);
-        console.log("rHex = ", rHex);
-        console.log("sHex = ", sHex);
+    console.log("signHash = ", signHash, contractAddress);
+    const {rHex, sHex} = extractRSFromSignature(signHash);
+    console.log("rHex = ", rHex);
+    console.log("sHex = ", sHex);
 
-        // 对r和s的16进制表示进行分割
-        const [rHexFirstHalf, rHexSecondHalf] = splitHexTo128Bits(rHex);
-        const [sHexFirstHalf, sHexSecondHalf] = splitHexTo128Bits(sHex);
+    // 对r和s的16进制表示进行分割
+    const [rHexFirstHalf, rHexSecondHalf] = splitHexTo128Bits(rHex);
+    const [sHexFirstHalf, sHexSecondHalf] = splitHexTo128Bits(sHex);
 
-        // 将分割后的部分组合成一个数组
-        const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, 1 , signCount];
+    // 将分割后的部分组合成一个数组
+    const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, 1 , signCount];
 
-        console.log("signatureArray = ", hexPartsArray);
+    console.log("signatureArray = ", hexPartsArray);
 
-        // 准备details对象
-        const details = {
-            maxFee:  1000000000000000, // 设定最大费用，根据需要调整
-            version: 1, // 合约版本
-            nonce: 0, // 随机数，根据需要调整
-        };
+    // 准备details对象
+    const details = {
+        maxFee:  1000000000000000, // 设定最大费用，根据需要调整
+        version: 1, // 合约版本
+        nonce: 0, // 随机数，根据需要调整
+    };
 
-        // 调用 deployAccountContract 函数
-        const deployTransaction = {
-            classHash: classHash,
-            constructorCalldata: callData,
-            addressSalt: salt,
-            signature: hexPartsArray as any, // 需要字符串数据格式
-        };
-        console.log("**********:", deployTransaction, details);
+    // 调用 deployAccountContract 函数
+    const deployTransaction = {
+        classHash: classHash,
+        constructorCalldata: callData,
+        addressSalt: salt,
+        signature: hexPartsArray as any, // 需要字符串数据格式
+    };
+    console.log("**********:", deployTransaction, details);
 
-        // add ,"1" after AAprivateKey if this account is not a Cairo 0 contract
-        const response = await provider.deployAccountContract(deployTransaction, details);
-        console.log('部署成功，交易信息：', response);
-
-    } catch (error) {
-        console.error("部署账户或签名过程中出错：", error);
-    }
+    // add ,"1" after AAprivateKey if this account is not a Cairo 0 contract
+    const response = await provider.deployAccountContract(deployTransaction, details);
+    console.log('部署成功，交易信息：', response);
+    return response;
 }
 
 export async function invokeTx(publicKey: string, signHash: string, signCount: number, transactions: Call[]) {
@@ -242,6 +236,7 @@ export async function invokeTx(publicKey: string, signHash: string, signCount: n
 }
 
 export const writeContract = async (publicKey: string, transactions: Call[]) => {
+    console.log('invoke', transactions)
     const hash = await getInvokeHash(publicKey, transactions);
 
     const publicKeyCredentialRequestOptions = {

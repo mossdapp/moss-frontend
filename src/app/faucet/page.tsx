@@ -18,8 +18,8 @@ import {useState} from "react";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 
 const tokens = {
-    Moon: '0x05f288c0e38cab14e3e66c5427eecaee1753bc44f71f00526a55c1a0f741257b',
-    Moss: '0x034f072411a9dde31e2bef9f24a170bdf3a0127fd9c882fdbd7b46aa7afbb6ca'
+    Moon: '0x074f4646bd254ac291db5a0a4761749ea9c33a65245bd139a956c23a14615e5b',
+    Moss: '0x04b3ca51489fdb9ec1dfdf0c0da9102e37b1cc652fb936de83f0e4ca2310133d'
 }
 
 const nfts = {
@@ -60,12 +60,13 @@ export default function Faucet() {
 
     const mintNFT = async (contractAddress: string) => {
         try {
-            const idArr = ids.split(',');
+            // const idArr = ids.split(',');
+            const res = cairo.uint256(ids);
             const transactions = [
                 {
                     contractAddress: contractAddress as string,
                     entrypoint: 'mint',
-                    calldata: [account?.contractAddress, ...idArr]
+                    calldata: [account?.contractAddress, 1, res.low, res.high]
                 }
             ];
             const response = await writeContract(account.publicKey, transactions);
@@ -101,7 +102,7 @@ export default function Faucet() {
                 <TabsContent value="nft">
                     <div className={'p-4 space-y-6'}>
                         <div>
-                            <Label>Token Id(多个用逗号隔开)</Label>
+                            <Label>Token Id</Label>
                             <Input placeholder={'Enter Token Id'} value={ids}
                                    onChange={e => setIds(e.target.value)}/>
                         </div>
