@@ -68,9 +68,12 @@
     "swr": "^2.2.5",
     "tailwind-merge": "^2.2.2",
     "tailwindcss-animate": "^1.0.7",
+    "valtio": "^1.13.2",
+    "valtio-persist": "^1.0.2",
     "vaul": "^0.9.0",
     "viem": "^2.9.16",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@types/node": "^20",

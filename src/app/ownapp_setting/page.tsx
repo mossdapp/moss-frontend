@@ -9,7 +9,6 @@ import {writeContract} from "@/core/account";
 import toast from "react-hot-toast";
 import {useLocalStorage} from "react-use";
 
-const contractAddress = '';
 export default function OwnappSetting() {
     const [data] = useLocalStorage<any>(GlobalConfig.mossWalletKey, null);
     const account = data?.account;

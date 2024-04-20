@@ -3,7 +3,7 @@ import {DappList, GlobalConfig} from "@/constants";
 import superdappImg from '@/assets/super-dapp.png';
 import {Settings} from "lucide-react";
 import {useRouter} from "next/navigation";
-import {useEffect} from "react";
+import {useEffect, useState} from "react";
 import {provider} from "@/core/account";
 import {Contract} from "starknet";
 import {useLocalStorage} from "react-use";
@@ -11,6 +11,7 @@ import {useLocalStorage} from "react-use";
 const DappItem = ({item:it}:{item:any}) => {
     const [data] = useLocalStorage<any>(GlobalConfig.mossWalletKey, null);
     const account = data?.account;
+    const [state, setState] = useState(false);
 
     const getOwnDapps = async (it: any) => {
         console.log(it, 'ss')
@@ -20,11 +21,14 @@ const DappItem = ({item:it}:{item:any}) => {
 
         const state = await contract.get_own_dapp_state(it.classHash);
         console.log(it, state);
+        setState(state);
     }
 
     useEffect(() => {
         getOwnDapps(it);
     }, [it]);
+
+    if(!state) return null;
     return (
         <div key={it.name} className={'flex flex-col gap-4 cursor-pointer'}>
             <img src={it.icon} alt={it.name} className={'w-20 h-20 mx-auto'}/>

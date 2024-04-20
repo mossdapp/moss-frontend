@@ -7,7 +7,7 @@ import {Button} from "@/components/ui/button";
 import {useParams, useRouter, useSearchParams} from "next/navigation";
 import {useLocalStorage} from "react-use";
 import {GlobalConfig} from "@/constants";
-import {getInvokeHash, invokeTx} from "@/core/account";
+import {getInvokeHash, invokeTx, writeContract} from "@/core/account";
 import {arrayBufferToHex, bufferDecodeHexString, splitAmountIntoU128Parts} from "@/core/utils";
 import useSWR from "swr";
 import {queryTokenBalance} from "@/services/wallet";
@@ -16,6 +16,8 @@ import {getDecimals} from "@/core/web3";
 import {parseUnits} from "viem";
 import toast from "react-hot-toast";
 import {cairo} from "starknet";
+import {useAccount} from "@/hooks/useAccount";
+import {useTransactionStore} from "@/components/PendingTransactions";
 
 
 export default function TransferPage() {
@@ -23,11 +25,11 @@ export default function TransferPage() {
     const { contractAddress } = useParams();
     const symbol = searchParams.get('symbol');
     const router = useRouter();
+    const {push} = useTransactionStore();
 
-    const [data] = useLocalStorage<any>(GlobalConfig.mossWalletKey, null);
-    const account = data?.account;
+    const {account} = useAccount();
 
-    const { data: banlanceData } = useSWR(['balance', account?.contractAddress], () => queryTokenBalance(data?.account?.contractAddress));
+    const { data: banlanceData } = useSWR(['balance', account?.contractAddress], () => queryTokenBalance(account?.contractAddress));
 
     const [recipient, setRecipient] = useState('');
     const [amount, setAmount] = useState('0');
@@ -48,27 +50,28 @@ export default function TransferPage() {
                 }
             ];
 
-            const hash = await getInvokeHash(account.publicKey, transactions);
+            // const hash = await getInvokeHash(account.publicKey, transactions);
+            //
+            // const publicKeyCredentialRequestOptions = {
+            //     challenge: bufferDecodeHexString(hash),
+            //     rpId: window.location.hostname, // 确保与当前页面的域名相匹配
+            // }
+            // const cred = await navigator.credentials.get({publicKey: publicKeyCredentialRequestOptions}) as any;
+            //
+            // const signature = cred?.response.signature;
+            // const signatureHex = arrayBufferToHex(signature);
+            // const authenticatorData = cred?.response.authenticatorData;
+            // const authenticatorDataHex = arrayBufferToHex(authenticatorData);
+            //
+            // // 获取最后四个字节的十六进制字符串
+            // const lastFourBytesHex = authenticatorDataHex.slice(-10);  // 获取最后8个字符
+            //
+            // // 解析十六进制为整数，假设大端序
+            // const signCount = parseInt(lastFourBytesHex, 16);  // 只取最后两位数
 
-            const publicKeyCredentialRequestOptions = {
-                challenge: bufferDecodeHexString(hash),
-                rpId: window.location.hostname, // 确保与当前页面的域名相匹配
-            }
-            const cred = await navigator.credentials.get({publicKey: publicKeyCredentialRequestOptions}) as any;
-
-            const signature = cred?.response.signature;
-            const signatureHex = arrayBufferToHex(signature);
-            const authenticatorData = cred?.response.authenticatorData;
-            const authenticatorDataHex = arrayBufferToHex(authenticatorData);
-
-            // 获取最后四个字节的十六进制字符串
-            const lastFourBytesHex = authenticatorDataHex.slice(-10);  // 获取最后8个字符
-
-            // 解析十六进制为整数，假设大端序
-            const signCount = parseInt(lastFourBytesHex, 16);  // 只取最后两位数
-
-            const response = await invokeTx(account.publicKey, signatureHex.slice(2), signCount, transactions);
+            const response = await writeContract(account.publicKey, transactions);
             console.log(response) //transaction_hash
+            push(response.transaction_hash);
             toast('Transaction submitted successfully');
             router.back();
         } catch (e:any) {
@@ -83,7 +86,7 @@ export default function TransferPage() {
                 <div className="flex justify-between">
                     <div className="text-sm">Balance</div>
                     <div>
-                        <div className="font-semibold text-xl">{currentData?.balance_display} ETH</div>
+                        <div className="font-semibold text-xl">{currentData?.balance_display} {symbol}</div>
                         {/*<div className="text-right text-sm">≈ $9,999.99 USD</div>*/}
                     </div>
                 </div>

@@ -4,18 +4,15 @@ import {TabBar} from "@/components/TabBar";
 import {getDecimals} from "@/core/web3";
 import {parseUnits} from "viem";
 import {cairo} from "starknet";
-import {getInvokeHash, invokeTx, writeContract} from "@/core/account";
-import {arrayBufferToHex, bufferDecodeHexString} from "@/core/utils";
+import {writeContract} from "@/core/account";
 import toast from "react-hot-toast";
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
-import {useLocalStorage} from "react-use";
-import {GlobalConfig} from "@/constants";
-import useSWR from "swr";
-import {queryTokenBalance} from "@/services/wallet";
 import {useState} from "react";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {useAccount} from "@/hooks/useAccount";
+import {useTransactionStore} from "@/components/PendingTransactions";
 
 const tokens = {
     Moon: '0x074f4646bd254ac291db5a0a4761749ea9c33a65245bd139a956c23a14615e5b',
@@ -28,8 +25,8 @@ const nfts = {
 }
 
 export default function Faucet() {
-    const [data] = useLocalStorage<any>(GlobalConfig.mossWalletKey, null);
-    const account = data?.account;
+    const {account} = useAccount();
+    const {push} = useTransactionStore();
 
     const [ids, setIds] = useState('');
     const [amount, setAmount] = useState('0');
@@ -50,6 +47,7 @@ export default function Faucet() {
             ];
             const response = await writeContract(account.publicKey, transactions);
             console.log(response) //transaction_hash
+            push(response.transaction_hash);
             toast('Transaction submitted successfully');
             // router.back();
         } catch (e: any) {
@@ -71,6 +69,7 @@ export default function Faucet() {
             ];
             const response = await writeContract(account.publicKey, transactions);
             console.log(response) //transaction_hash
+            push(response.transaction_hash);
             toast('Transaction submitted successfully');
             // router.back();
         } catch (e: any) {

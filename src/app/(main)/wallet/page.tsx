@@ -1,11 +1,9 @@
 'use client';
 import {useLocalStorage} from "react-use";
 import {GlobalConfig, TokenUrlMap} from "@/constants";
-import {useEffect} from "react";
 import { Button } from "@/components/ui/button";
 import {deployAccount, getDeployHash} from "@/core/account";
 import {arrayBufferToHex, bufferDecodeHexString} from "@/core/utils";
-import {Container} from "@/components/Container";
 import useSWR from "swr";
 import {queryContractInfo, queryNFTBalance, queryTokenBalance} from "@/services/wallet";
 import {shortenAddress} from "@/utils/common";
@@ -17,6 +15,7 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {useAccount} from "@/hooks/useAccount";
+import {PendingTransactions} from "@/components/PendingTransactions";
 
 const TokenList = () => {
     const router = useRouter();
@@ -81,11 +80,10 @@ const NFTList = () => {
 
 export default function Wallet() {
     const router = useRouter();
-    const [data] = useLocalStorage<any>(GlobalConfig.mossWalletKey, null);
-    const account = data?.account;
+    const {account} = useAccount();
 
 
-    const {data: contractInfo} = useSWR(['contractInfo', account?.contractAddress], () => queryContractInfo(data?.account?.contractAddress));
+    const {data: contractInfo} = useSWR(['contractInfo', account?.contractAddress], () => queryContractInfo(account?.contractAddress));
 
 
     const handleDeploy = async () => {
@@ -137,6 +135,7 @@ export default function Wallet() {
     return (
         <div>
             <div className={'text-center font-bold text-lg relative'}>
+                <PendingTransactions/>
                 Wallet
 
                 <Link href={'/faucet'} className={'right-0 absolute top-0 text-sm text-gray-400'}>

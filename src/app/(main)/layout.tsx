@@ -13,7 +13,6 @@ export default function Layout({children}:{children: ReactNode}) {
         router.push(path);
     }
 
-    console.log(path);
     return (
         <Container>
             {children}
