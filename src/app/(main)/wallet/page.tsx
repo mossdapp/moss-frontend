@@ -60,15 +60,15 @@ const NFTList = () => {
                         <div key={item.id}
                              className={'flex items-center justify-between cursor-pointer'}
                              onClick={() => {
-                                 router.push(`/transfer/${item.token_contract_address}?symbol=${item.contract_token_contract.symbol}`)
+                                 router.push(`/transfer/${item.node.nft_contract_address}?name=${item.node.name}`)
                              }}>
                             <div className="w-8">
                                 <img className={'h-5'}
-                                     src={item.contract_token_contract.icon_url || TokenUrlMap.ERC20}
-                                     alt={item.contract_token_contract.symbol}/>
+                                     src={item.node.image_url || TokenUrlMap.ERC20}
+                                     alt={item.node.name}/>
                             </div>
-                            <div className={'flex-1 pl-8'}>{item.contract_token_contract.symbol}</div>
-                            <span>{item.balance_display}</span>
+                            <div className={'flex-1 pl-8'}>{shortenAddress(item.node.nft_contract_address)}</div>
+                            <span>#{item.node.token_id}</span>
                         </div>
                     )
                 })

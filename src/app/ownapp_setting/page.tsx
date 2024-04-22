@@ -19,18 +19,24 @@ export default function OwnappSetting() {
         }
     }));
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (isAll?: boolean) => {
         console.log(dappList)
         const selectedDapp = dappList?.filter(it => it.selected);
         const classHashs = selectedDapp?.map(it => it.classHash);
         try {
-            const transactions = [
+            const transactions = isAll ? [
+                {
+                    contractAddress: account?.contractAddress as string,
+                    entrypoint: 'set_approval_all_dapps',
+                    calldata: [1]
+                }
+            ] : [
                 {
                     contractAddress: account?.contractAddress as string,
                     entrypoint: 'set_own_dapps',
                     calldata: [classHashs, new Array(classHashs.length).fill(1)]
                 }
-            ];
+            ]
             const response = await writeContract(account.publicKey, transactions);
             console.log(response) //transaction_hash
             toast('Transaction submitted successfully');
@@ -42,7 +48,7 @@ export default function OwnappSetting() {
     return (
         <Container>
             <TabBar title={'Ownapp Setting'}/>
-            <div className="p-6">
+            <div className="py-6">
                 <div className={'text-center text-gray-400'}>
                     Select your ownapp
                 </div>
@@ -75,8 +81,9 @@ export default function OwnappSetting() {
                     }
                 </div>
 
-                <div className={'mt-5'}>
-                    <Button className={'w-full'} onClick={handleSubmit}>Submit</Button>
+                <div className={'mt-5 flex items-center gap-5'}>
+                    <Button className={'w-full'} onClick={() => handleSubmit()}>Approval Selected</Button>
+                    <Button className={'w-full'} onClick={() => handleSubmit(true)}>Approval All</Button>
                 </div>
             </div>
         </Container>
