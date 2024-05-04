@@ -14,14 +14,14 @@ import {
 } from "@/core/utils";
 import {ENVS, GlobalConfig} from "@/constants";
 
-export const provider = new RpcProvider({nodeUrl: 'https://starknet-sepolia.public.blastapi.io'});
+export const provider = new RpcProvider({nodeUrl: GlobalConfig.RPCURL});
 
 const chainId = shortString.encodeShortString('SN_SEPOLIA'); //'0x534e5f5345504f4c4941'; //sepolia
 
 
 const getNonce = async (address: string) => {
     try {
-        const res = await fetch(GlobalConfig.blastAPI, {
+        const res = await fetch(GlobalConfig.RPCURL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

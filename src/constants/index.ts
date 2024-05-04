@@ -14,7 +14,8 @@ export const GlobalConfig = {
     mossWalletKey: 'moss:wallet',
     alchemyAPI: 'https://starknet-sepolia.g.alchemy.com/v2/GQYPecngmX2a1VBVYq2V9hL3FIMFqoHk',
     blastAPI: 'https://starknet-sepolia.public.blastapi.io/rpc/v0_7',
-    scanUrl: 'https://sepolia.starkscan.co/tx/'
+    scanUrl: 'https://sepolia.starkscan.co/tx/',
+    RPCURL: 'https://starknet-sepolia.infura.io/v3/8d11ac6606954ccc8b0ddeb6c132e24b'
 }
 
 
@@ -38,7 +39,8 @@ export const DappList = [
     {
         name: 'NFTManage',
         icon: NFTManageImg.src,
-        classHash: '0x052144d89fb1c3ed153a048c7795999172ce953062ff181353469ad46ded015f'
+        classHash: '0x052144d89fb1c3ed153a048c7795999172ce953062ff181353469ad46ded015f',
+        path: '/ownapp/nft_manage'
     },
     {
         name: 'NFTMarket',
@@ -53,6 +55,7 @@ export const DappList = [
     {
         name: 'TokenManage',
         icon: TokenManageImg.src,
-        classHash: '0x032093a8d8e0a79801d1e2320e306e1334b5dda28bff3129797ce9fbd9209d26'
+        classHash: '0x032093a8d8e0a79801d1e2320e306e1334b5dda28bff3129797ce9fbd9209d26',
+        path: '/ownapp/token_manage'
     }
 ]

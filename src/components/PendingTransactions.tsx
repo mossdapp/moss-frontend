@@ -12,14 +12,20 @@ interface StoreState {
     transactions: string[]
     set: (v: string[]) => void
     push: (v: string) => void
+    pendings: string[]
+    setPendings: (v: string[]) => void
+    pushPendings: (v: string) => void
 }
 
 export const useTransactionStore = create<StoreState>()(
     persist(
         (set, get) => ({
             transactions: [],
+            pendings: [],
             set: (v: string[]) => set({ transactions: v }),
             push: (v: string) => set({ transactions: [...get().transactions, v] }),
+            setPendings: (v: string[]) => set({ pendings: v }),
+            pushPendings: (v: string) => set({ pendings: [...get().pendings, v] }),
         }),
         {
             name: 'transactions-storage', // name of the item in the storage (must be unique)
@@ -28,7 +34,7 @@ export const useTransactionStore = create<StoreState>()(
 )
 
 export const PendingTransactions = () => {
-    const {transactions, set: setTransactions} = useTransactionStore();
+    const {transactions, set: setTransactions, pendings, setPendings, pushPendings} = useTransactionStore();
 
     const waitForTransaction = async (hash: any) => {
         try {
@@ -48,7 +54,11 @@ export const PendingTransactions = () => {
         if (transactions.length > 0) {
             const processTransactions = async () => {
                 for (const hash of transactions) {
+                    if(pendings.includes(hash)) {
+                        continue;
+                    }
                     await waitForTransaction(hash);
+                    pushPendings(hash);
                     // 一旦交易确认，从数组中移除该hash
                     setTransactions(transactions.filter(t => t !== hash));
                 }

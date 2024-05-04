@@ -16,6 +16,7 @@ import Link from "next/link";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {useAccount} from "@/hooks/useAccount";
 import {PendingTransactions} from "@/components/PendingTransactions";
+import {NFTIcon} from "@/components/Icons";
 
 const TokenList = () => {
     const router = useRouter();
@@ -53,22 +54,26 @@ const NFTList = () => {
     const { data: banlanceData } = useSWR(['nft-balance', account?.contractAddress], () => queryNFTBalance(account?.contractAddress));
 
     return (
-        <div className={'mt-4 space-y-6'}>
+        <div className={'mt-4 grid grid-cols-2 gap-4'}>
             {
                 banlanceData?.data?.nfts?.edges?.map((item: any) => {
                     return (
                         <div key={item.id}
-                             className={'flex items-center justify-between cursor-pointer'}
+                             className={'cursor-pointer shadow'}
                              onClick={() => {
                                  router.push(`/transfer/${item.node.nft_contract_address}?name=${item.node.name}`)
                              }}>
-                            <div className="w-8">
-                                <img className={'h-5'}
-                                     src={item.node.image_url || TokenUrlMap.ERC20}
-                                     alt={item.node.name}/>
+                            <div className="w-full">
+                                {
+                                    item.node.image_url ? <img className={'w-full'}
+                                                               src={item.node.image_url}
+                                                               alt={item.node.name}/> : <NFTIcon/>
+                                }
                             </div>
-                            <div className={'flex-1 pl-8'}>{shortenAddress(item.node.nft_contract_address)}</div>
-                            <span>#{item.node.token_id}</span>
+                            <div className="flex justify-between items-center p-2">
+                                <div className={'text-gray-600 text-lg font-semibold'}>{item.node.name || 'NFT'}</div>
+                                <span>#{item.node.token_id}</span>
+                            </div>
                         </div>
                     )
                 })

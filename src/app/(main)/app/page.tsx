@@ -12,6 +12,7 @@ const DappItem = ({item:it}:{item:any}) => {
     const [data] = useLocalStorage<any>(GlobalConfig.mossWalletKey, null);
     const account = data?.account;
     const [state, setState] = useState(false);
+    const router = useRouter();
 
     const getOwnDapps = async (it: any) => {
         console.log(it, 'ss')
@@ -30,7 +31,7 @@ const DappItem = ({item:it}:{item:any}) => {
 
     if(!state) return null;
     return (
-        <div key={it.name} className={'flex flex-col gap-4 cursor-pointer'}>
+        <div key={it.name} className={'flex flex-col gap-4 cursor-pointer'} onClick={() => router.push(it.path)}>
             <img src={it.icon} alt={it.name} className={'w-20 h-20 mx-auto'}/>
             <div className={'text-center text-sm text-muted-foreground'}>
                 {it.name}
