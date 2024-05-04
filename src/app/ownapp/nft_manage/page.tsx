@@ -3,7 +3,7 @@ import {TabBar} from "@/components/TabBar";
 import {Container} from "@/components/Container";
 import {useAccount} from "@/hooks/useAccount";
 import useSWR from "swr";
-import {queryTokenBalance} from "@/services/wallet";
+import {queryNFTBalance} from "@/services/wallet";
 import {Label} from "@/components/ui/label";
 import {Select} from "@/components/Select";
 import {useState} from "react";
@@ -14,41 +14,36 @@ import {DappList} from "@/constants";
 import {provider, writeContract} from "@/core/account";
 import toast from "react-hot-toast";
 import {useTransactionStore} from "@/components/PendingTransactions";
-import {getDecimals} from "@/core/web3";
-import {formatUnits, parseUnits} from "viem";
 import {Checkbox} from "@/components/ui/checkbox";
+import {shortenAddress} from "@/utils/common";
 
 
 export default function TokenManage() {
     const { account } = useAccount();
-    const { data: banlanceData } = useSWR(['token-balance', account?.contractAddress], () => queryTokenBalance(account?.contractAddress));
+    const { data: banlanceData } = useSWR(['nft-balance', account?.contractAddress], () => queryNFTBalance(account?.contractAddress));
     const [address, setAddress] = useState('');
     const [spender, setSpender] = useState('');
     const [recipient, setRecipient] = useState('');
-    const [amount, setAmount] = useState('0');
+    const [tokenId, setTokenId] = useState('');
     const [isApprovalAll, setApprovalAll] = useState(false);
-    const [allowance, setAllowance] = useState('');
+    const [approvalById, setApprovalById] = useState(false);
     const [approvalResult, setApprovalResult] = useState(false);
+    const [approvalAllResult, setApprovalAllResult] = useState(false);
 
     const {push} = useTransactionStore();
-    const TokenManageDapp = DappList.find(it => it.name === 'TokenManage');
+    const TokenManageDapp = DappList.find(it => it.name === 'NFTManage');
 
+    console.log(approvalById, 'id')
     const handleGetAllowance = async () => {
         try {
-            const Selector = hash.getSelectorFromName('token_allowance');
+            const Selector = hash.getSelectorFromName('nft_get_approved');
             console.log('Selector =', Selector);
             const { abi } = await provider.getClassAt(account?.contractAddress);
             const contract = new Contract(abi, account?.contractAddress, provider);
-            const result = await contract.read_own_dapp(TokenManageDapp!.classHash, Selector, [address, spender]);
+            const res = cairo.uint256(tokenId);
+            const result = await contract.read_own_dapp(TokenManageDapp!.classHash, Selector, [address, res.low, res.high]);
             console.log(result) //transaction_hash
-            const allowance = uint256.uint256ToBN({
-                low: result[0],
-                high: result[1],
-            });
-            console.log(allowance, allowance.toString(), 'all')
-            const decimals = await getDecimals(address as string);
-            const amountStr = formatUnits(allowance, Number(decimals));
-            setAllowance(amountStr);
+            setApprovalById(!!Number(result[0]));
         } catch (e: any) {
             console.error("交易出错：", e);
             toast.error(e.message);
@@ -57,10 +52,8 @@ export default function TokenManage() {
 
     const handleTransfer = async () => {
         try {
-            const decimals = await getDecimals(address as string);
-            const amountWei = parseUnits(amount, Number(decimals));
-            const res = cairo.uint256(amountWei.toString());
-            const Selector = hash.getSelectorFromName('token_transfer');
+            const res = cairo.uint256(tokenId);
+            const Selector = hash.getSelectorFromName('nft_transfer');
             console.log('Selector =', Selector);
             const transactions = [
                 {
@@ -83,10 +76,8 @@ export default function TokenManage() {
 
     const handleApproval = async () => {
         try {
-            const decimals = await getDecimals(address as string);
-            const amountWei = parseUnits(amount, Number(decimals));
-            const res = cairo.uint256(amountWei.toString());
-            const Selector = hash.getSelectorFromName('token_approve');
+            const res = cairo.uint256(tokenId);
+            const Selector = hash.getSelectorFromName('nft_approve');
             console.log('Selector =', Selector);
             const transactions = [
                 {
@@ -107,15 +98,15 @@ export default function TokenManage() {
         }
     }
 
-    const handleApprovalAll = async () => {
+    const handleApprovalAll = async (isAll = true) => {
         try {
-            const Selector = hash.getSelectorFromName('token_approve_for_all');
+            const Selector = hash.getSelectorFromName(isAll ? 'nft_set_approval_for_all_all' : 'nft_set_approval_for_one_all');
             console.log('Selector =', Selector);
             const transactions = [
                 {
                     contractAddress: account?.contractAddress,
                     entrypoint: 'execute_own_dapp',
-                    calldata: [TokenManageDapp!.classHash, Selector, [spender, isApprovalAll]]
+                    calldata: [TokenManageDapp!.classHash, Selector, isAll ? [spender, isApprovalAll] : [address, spender, isApprovalAll]]
                 }
             ];
             const response = await writeContract(account.publicKey, transactions);
@@ -130,15 +121,19 @@ export default function TokenManage() {
         }
     }
 
-    const checkApprovalAll = async () => {
+    const checkApprovalAll = async (isAll = true) => {
         try {
-            const Selector = hash.getSelectorFromName('token_is_approve_for_all');
+            const Selector = hash.getSelectorFromName(isAll ? 'nft_is_approved_for_all_all' : 'nft_is_approved_for_one_all');
             console.log('Selector =', Selector);
             const { abi } = await provider.getClassAt(account?.contractAddress);
             const contract = new Contract(abi, account?.contractAddress, provider);
-            const result = await contract.read_own_dapp(TokenManageDapp!.classHash, Selector, [spender]);
+            const result = await contract.read_own_dapp(TokenManageDapp!.classHash, Selector, isAll ? [spender] : [address, spender]);
             console.log(result)
-            setApprovalResult(!!Number(result[0]));
+            if(isAll) {
+                setApprovalAllResult(!!Number(result[0]));
+            } else {
+                setApprovalResult(!!Number(result[0]));
+            }
         } catch (e: any) {
             console.error("交易出错：", e);
             toast.error(e.message);
@@ -147,7 +142,7 @@ export default function TokenManage() {
     return (
         <Container>
             <TabBar title={`Token Manage`}/>
-            <div className="py-4 space-y-6">
+            <div className="py-4 space-y-6 px-2">
                 <div>
                     <Label>Select your token</Label>
                     <Select
@@ -155,10 +150,10 @@ export default function TokenManage() {
                         onChange={(v) => {
                             setAddress(v);
                         }}
-                        options={banlanceData?.data?.tokenBalancesByOwnerAddress?.map(((it: any) => {
+                        options={banlanceData?.data?.nfts?.edges?.map(((it: any) => {
                             return {
-                                label: it.contract_token_contract.symbol,
-                                value: it.token_contract_address
+                                label: `${it.node.name || shortenAddress(it.node.nft_contract_address)}-#${it.node.token_id}`,
+                                value: it.node.nft_contract_address
                             }
                         })) || []}>
                     </Select>
@@ -167,17 +162,17 @@ export default function TokenManage() {
                     address && (
                         <>
                             <div className={'space-y-2'}>
-                                <Label>Get token allowance</Label>
+                                <Label>Get nft approved</Label>
+                                <Input placeholder={'input spender'} value={spender}
+                                       onChange={e => setSpender(e.target.value)}/>
                                 <div className={'flex gap-2 items-center'}>
-                                    <Input placeholder={'input spender address'} value={spender}
-                                           onChange={e => setSpender(e.target.value)}/>
+                                    <Input placeholder={'input token id'} value={tokenId}
+                                           onChange={e => setTokenId(e.target.value)}/>
                                     <Button onClick={handleGetAllowance}>Submit</Button>
                                 </div>
-                                {
-                                    allowance ? <div>
-                                        result: {allowance}
-                                    </div> : null
-                                }
+                                <div>
+                                    {`result: ${approvalById}`}
+                                </div>
                             </div>
 
                             <div>
@@ -189,9 +184,9 @@ export default function TokenManage() {
                                                onChange={e => setRecipient(e.target.value)}/>
                                     </div>
                                     <div>
-                                        <Label>amount</Label>
-                                        <Input placeholder={'Enter Amount'} value={amount}
-                                               onChange={e => setAmount(e.target.value)}/>
+                                        <Label>token id</Label>
+                                        <Input placeholder={'Enter token id'} value={tokenId}
+                                               onChange={e => setTokenId(e.target.value)}/>
                                     </div>
                                     <Button onClick={handleTransfer}>Submit</Button>
                                 </div>
@@ -205,11 +200,35 @@ export default function TokenManage() {
                                                onChange={e => setSpender(e.target.value)}/>
                                     </div>
                                     <div>
-                                        <Label>amount</Label>
-                                        <Input placeholder={'Enter Amount'} value={amount}
-                                               onChange={e => setAmount(e.target.value)}/>
+                                        <Label>token id</Label>
+                                        <Input placeholder={'Enter token id'} value={tokenId}
+                                               onChange={e => setTokenId(e.target.value)}/>
                                     </div>
                                     <Button onClick={handleApproval}>Approval</Button>
+                                </div>
+                            </div>
+                            <div>
+                                <Label>Approval one nft of all</Label>
+                                <div className={'space-y-4'}>
+                                    <div>
+                                        <Label>spender {`result:${approvalResult}`}</Label>
+                                        <div className="flex gap-2 items-center">
+                                            <Input placeholder={'spender'} value={spender}
+                                                   onChange={e => setSpender(e.target.value)}/>
+                                            <Button onClick={() => checkApprovalAll(false)}>Check</Button>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox id="approval" checked={isApprovalAll}
+                                                  onCheckedChange={e => setApprovalAll(e as any)}/>
+                                        <Label
+                                            htmlFor="approval"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                        >
+                                            is approval all
+                                        </Label>
+                                    </div>
+                                    <Button onClick={() => handleApprovalAll(false)}>Submit</Button>
                                 </div>
                             </div>
                         </>
@@ -219,15 +238,16 @@ export default function TokenManage() {
                     <Label>Approval all</Label>
                     <div className={'space-y-4'}>
                         <div>
-                            <Label>spender {`result:${approvalResult}`}</Label>
+                            <Label>spender {`result:${approvalAllResult}`}</Label>
                             <div className="flex gap-2 items-center">
                                 <Input placeholder={'spender'} value={spender}
                                        onChange={e => setSpender(e.target.value)}/>
-                                <Button onClick={checkApprovalAll}>Check</Button>
+                                <Button onClick={() => checkApprovalAll()}>Check</Button>
                             </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <Checkbox id="approval" checked={isApprovalAll} onCheckedChange={e => setApprovalAll(e as any)}/>
+                            <Checkbox id="approval" checked={isApprovalAll}
+                                      onCheckedChange={e => setApprovalAll(e as any)}/>
                             <Label
                                 htmlFor="approval"
                                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -235,7 +255,7 @@ export default function TokenManage() {
                                 is approval all
                             </Label>
                         </div>
-                        <Button onClick={handleApprovalAll}>Submit</Button>
+                        <Button onClick={() => handleApprovalAll()}>Submit</Button>
                     </div>
                 </div>
             </div>
