@@ -9,7 +9,7 @@ import {Select} from "@/components/Select";
 import {useState} from "react";
 import { Input } from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
-import {cairo, Contract, hash, uint256} from "starknet";
+import {cairo, Contract, hash} from "starknet";
 import {DappList} from "@/constants";
 import {provider, writeContract} from "@/core/account";
 import toast from "react-hot-toast";
@@ -18,7 +18,7 @@ import {Checkbox} from "@/components/ui/checkbox";
 import {shortenAddress} from "@/utils/common";
 
 
-export default function TokenManage() {
+export default function NFTManage() {
     const { account } = useAccount();
     const { data: banlanceData } = useSWR(['nft-balance', account?.contractAddress], () => queryNFTBalance(account?.contractAddress));
     const [address, setAddress] = useState('');
@@ -31,9 +31,8 @@ export default function TokenManage() {
     const [approvalAllResult, setApprovalAllResult] = useState(false);
 
     const {push} = useTransactionStore();
-    const TokenManageDapp = DappList.find(it => it.name === 'NFTManage');
+    const NFTManageDapp = DappList.find(it => it.name === 'NFTManage');
 
-    console.log(approvalById, 'id')
     const handleGetAllowance = async () => {
         try {
             const Selector = hash.getSelectorFromName('nft_get_approved');
@@ -41,7 +40,7 @@ export default function TokenManage() {
             const { abi } = await provider.getClassAt(account?.contractAddress);
             const contract = new Contract(abi, account?.contractAddress, provider);
             const res = cairo.uint256(tokenId);
-            const result = await contract.read_own_dapp(TokenManageDapp!.classHash, Selector, [address, res.low, res.high]);
+            const result = await contract.read_own_dapp(NFTManageDapp!.classHash, Selector, [address, res.low, res.high]);
             console.log(result) //transaction_hash
             setApprovalById(!!Number(result[0]));
         } catch (e: any) {
@@ -59,7 +58,7 @@ export default function TokenManage() {
                 {
                     contractAddress: account?.contractAddress,
                     entrypoint: 'execute_own_dapp',
-                    calldata: [TokenManageDapp!.classHash, Selector, [address, recipient, res.low, res.high]]
+                    calldata: [NFTManageDapp!.classHash, Selector, [address, recipient, res.low, res.high]]
                 }
             ];
             const response = await writeContract(account.publicKey, transactions);
@@ -83,7 +82,7 @@ export default function TokenManage() {
                 {
                     contractAddress: account?.contractAddress,
                     entrypoint: 'execute_own_dapp',
-                    calldata: [TokenManageDapp!.classHash, Selector, [address, spender, res.low, res.high]]
+                    calldata: [NFTManageDapp!.classHash, Selector, [address, spender, res.low, res.high]]
                 }
             ];
             const response = await writeContract(account.publicKey, transactions);
@@ -106,7 +105,7 @@ export default function TokenManage() {
                 {
                     contractAddress: account?.contractAddress,
                     entrypoint: 'execute_own_dapp',
-                    calldata: [TokenManageDapp!.classHash, Selector, isAll ? [spender, isApprovalAll] : [address, spender, isApprovalAll]]
+                    calldata: [NFTManageDapp!.classHash, Selector, isAll ? [spender, isApprovalAll] : [address, spender, isApprovalAll]]
                 }
             ];
             const response = await writeContract(account.publicKey, transactions);
@@ -127,7 +126,7 @@ export default function TokenManage() {
             console.log('Selector =', Selector);
             const { abi } = await provider.getClassAt(account?.contractAddress);
             const contract = new Contract(abi, account?.contractAddress, provider);
-            const result = await contract.read_own_dapp(TokenManageDapp!.classHash, Selector, isAll ? [spender] : [address, spender]);
+            const result = await contract.read_own_dapp(NFTManageDapp!.classHash, Selector, isAll ? [spender] : [address, spender]);
             console.log(result)
             if(isAll) {
                 setApprovalAllResult(!!Number(result[0]));

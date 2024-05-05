@@ -45,12 +45,14 @@ export const DappList = [
     {
         name: 'NFTMarket',
         icon: NFTMarketImg.src,
-        classHash: '0x016c18999acfb988bbb58187ba926e62920981993acc82229a825dad253ef24c'
+        classHash: '0x016c18999acfb988bbb58187ba926e62920981993acc82229a825dad253ef24c',
+        path: '/ownapp/nft_market'
     },
     {
         name: 'SocialTag',
         icon: SocialTagImg.src,
-        classHash: '0x008343ff1b5f03167899f6d9020720e16492d0d1eefc5026f9d12a0de0c3ef71'
+        classHash: '0x008343ff1b5f03167899f6d9020720e16492d0d1eefc5026f9d12a0de0c3ef71',
+        path: '/ownapp/tag'
     },
     {
         name: 'TokenManage',
