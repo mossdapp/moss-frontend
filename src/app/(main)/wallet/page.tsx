@@ -2,7 +2,7 @@
 import {useLocalStorage} from "react-use";
 import {GlobalConfig, TokenUrlMap} from "@/constants";
 import { Button } from "@/components/ui/button";
-import {deployAccount, getDeployHash} from "@/core/account";
+import {deployAccount, getDeployHash, provider} from "@/core/account";
 import {arrayBufferToHex, bufferDecodeHexString} from "@/core/utils";
 import useSWR from "swr";
 import {queryContractInfo, queryNFTBalance, queryTokenBalance} from "@/services/wallet";
@@ -15,7 +15,7 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {useAccount} from "@/hooks/useAccount";
-import {PendingTransactions} from "@/components/PendingTransactions";
+import {PendingTransactions, useTransactionStore} from "@/components/PendingTransactions";
 import {NFTIcon} from "@/components/Icons";
 
 const TokenList = () => {
@@ -86,9 +86,10 @@ const NFTList = () => {
 export default function Wallet() {
     const router = useRouter();
     const {account} = useAccount();
+    const {push} = useTransactionStore();
 
 
-    const {data: contractInfo} = useSWR(['contractInfo', account?.contractAddress], () => queryContractInfo(account?.contractAddress));
+    const {data: contractInfo, mutate} = useSWR(['contractInfo', account?.contractAddress], () => queryContractInfo(account?.contractAddress));
 
 
     const handleDeploy = async () => {
@@ -127,8 +128,15 @@ export default function Wallet() {
             console.log(`signCount: ${signCount}`);
             console.log(signatureHex);
 
-            await deployAccount(account.publicKey, signatureHex.slice(2), signCount);
+            const response = await deployAccount(account.publicKey, signatureHex.slice(2), signCount);
+            push(response.transaction_hash);
             toast.success('Deploy transaction submit successfully');
+            const recipient = await provider.waitForTransaction(response.transaction_hash);
+            console.log(recipient, 'rr')
+            if ((recipient as any)?.execution_status === "SUCCEEDED") {
+                toast.success("Transaction has been confirmed");
+                mutate('');
+            }
         } catch (e: any) {
             console.error("交易出错：", e);
             toast.error(e.message);

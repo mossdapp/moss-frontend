@@ -19,9 +19,9 @@ export default function OwnappSetting() {
         }
     }));
 
+    const selectedDapp = dappList?.filter(it => it.selected);
+
     const handleSubmit = async (isAll?: boolean) => {
-        console.log(dappList)
-        const selectedDapp = dappList?.filter(it => it.selected);
         const classHashs = selectedDapp?.map(it => it.classHash);
         try {
             const transactions = isAll ? [
@@ -82,7 +82,7 @@ export default function OwnappSetting() {
                 </div>
 
                 <div className={'mt-5 flex items-center gap-5'}>
-                    <Button className={'w-full'} onClick={() => handleSubmit()}>Approval Selected</Button>
+                    <Button className={'w-full'} onClick={() => handleSubmit()} disabled={!selectedDapp?.length}>Approval Selected</Button>
                     <Button className={'w-full'} onClick={() => handleSubmit(true)}>Approval All</Button>
                 </div>
             </div>

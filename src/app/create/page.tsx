@@ -47,7 +47,7 @@ export default function Home() {
   }
   return (
       <Container>
-        <div className={'h-full text-center flex flex-col items-center justify-center gap-6 '}>
+        <div className={'h-[85vh] text-center flex flex-col items-center justify-center gap-6 '}>
           <img src={logoImg.src} className={'w-12 h-12 absolute left-5 top-5'} alt=""/>
           <div className={'mb-8'}>
             <h1 className="text-4xl font-bold text-primary">Welcome to Moss</h1>

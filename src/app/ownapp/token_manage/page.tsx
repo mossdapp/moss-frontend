@@ -72,7 +72,7 @@ export default function TokenManage() {
             const response = await writeContract(account.publicKey, transactions);
             console.log(response) //transaction_hash
             push(response.transaction_hash);
-            toast('Transaction submitted successfully');
+            toast.success('Transaction submitted successfully');
             const result = await provider.waitForTransaction(response.transaction_hash);
             console.log(result, 'rr')
         } catch (e: any) {
@@ -98,7 +98,7 @@ export default function TokenManage() {
             const response = await writeContract(account.publicKey, transactions);
             console.log(response) //transaction_hash
             push(response.transaction_hash);
-            toast('Transaction submitted successfully');
+            toast.success('Transaction submitted successfully');
             const result = await provider.waitForTransaction(response.transaction_hash);
             console.log(result, 'rr')
         } catch (e: any) {
@@ -121,7 +121,7 @@ export default function TokenManage() {
             const response = await writeContract(account.publicKey, transactions);
             console.log(response) //transaction_hash
             push(response.transaction_hash);
-            toast('Transaction submitted successfully');
+            toast.success('Transaction submitted successfully');
             const result = await provider.waitForTransaction(response.transaction_hash);
             console.log(result, 'rr')
         } catch (e: any) {
@@ -147,7 +147,7 @@ export default function TokenManage() {
     return (
         <Container>
             <TabBar title={`Token Manage`}/>
-            <div className="py-4 space-y-6">
+            <div className="py-4 space-y-6 px-1">
                 <div>
                     <Label>Select your token</Label>
                     <Select

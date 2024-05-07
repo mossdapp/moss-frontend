@@ -51,7 +51,7 @@ export default function TagDapp() {
             const response = await writeContract(account.publicKey, transactions);
             console.log(response) //transaction_hash
             push(response.transaction_hash);
-            toast('Transaction submitted successfully');
+            toast.success('Transaction submitted successfully');
             const result = await provider.waitForTransaction(response.transaction_hash);
             console.log(result, 'rr')
         } catch (e: any) {
@@ -74,7 +74,7 @@ export default function TagDapp() {
             const response = await writeContract(account.publicKey, transactions);
             console.log(response) //transaction_hash
             push(response.transaction_hash);
-            toast('Transaction submitted successfully');
+            toast.success('Transaction submitted successfully');
             const result = await provider.waitForTransaction(response.transaction_hash);
             console.log(result, 'rr')
         } catch (e: any) {
