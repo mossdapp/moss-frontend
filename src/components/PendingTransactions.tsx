@@ -82,7 +82,7 @@ export const PendingTransactions = () => {
                 <div className={'absolute top-0 left-0 cursor-pointer'}>
                     <ArrowRightLeft className={'text-primary/80'} size={20}/>
                     <span
-                        className={'absolute top-[-5px] right-[-23px] text-xs text-white bg-red-500 rounded-full px-2'}>
+                        className={'absolute bottom-[-5px] right-[-23px] text-xs text-white bg-red-500 rounded-full px-2'}>
                 {transactions.length}
             </span>
                 </div>

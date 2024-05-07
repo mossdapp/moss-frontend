@@ -143,7 +143,7 @@ export default function Wallet() {
                 <PendingTransactions/>
                 Wallet
 
-                <Link href={'/faucet'} className={'right-0 absolute top-0 text-sm text-gray-400'}>
+                <Link href={'/faucet'} className={'right-1 absolute top-0 text-sm text-gray-400'}>
                     Faucet
                 </Link>
             </div>

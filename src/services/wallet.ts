@@ -1,4 +1,4 @@
-const API = 'https://moss-bff-api.zeabur.app/starknet';
+const API = '/graph/api'; //https://moss-bff-api.zeabur.app/starknet
 
 //'http://localhost:4000/starknet';
 
