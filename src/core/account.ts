@@ -138,7 +138,7 @@ export const getInvokeHash = async (publicKey: string, transactions: Call[]) => 
         contractAddress,
         1,    // version
         mycalldata,
-        1500000000000000,  //maxfee
+        3000000000000000,  //maxfee
         chainId as any,
         nonce
     );
@@ -216,7 +216,7 @@ export async function invokeTx(publicKey: string, signHash: string, signCount: n
 
     // 准备details对象
     const details = {
-        maxFee:  1500000000000000, // 设定最大费用，根据需要调整, must be the same as hash function
+        maxFee:  3000000000000000, // 设定最大费用，根据需要调整, must be the same as hash function
         version: 1, // 合约版本
         nonce: nonce, // 随机数，根据需要调整
     };
@@ -255,6 +255,10 @@ export const writeContract = async (publicKey: string, transactions: Call[]) => 
 
     // 解析十六进制为整数，假设大端序
     const signCount = parseInt(lastFourBytesHex, 16);  // 只取最后两位数
+    //
+    const clientDataJSON = cred?.response.clientDataJSON;
+    const clientDataJSONHex = arrayBufferToHex(clientDataJSON);
+    console.log(`Client Data JSON: ${clientDataJSONHex}`);
 
     const response = await invokeTx(publicKey, signatureHex.slice(2), signCount, transactions);
     return response;
