@@ -13,7 +13,7 @@ export const ENVS = {
 export const GlobalConfig = {
     mossWalletKey: 'moss:wallet',
     alchemyAPI: 'https://starknet-sepolia.g.alchemy.com/v2/GQYPecngmX2a1VBVYq2V9hL3FIMFqoHk',
-    blastAPI: 'https://starknet-sepolia.blastapi.io/d781dad5-e00e-4b51-a082-79dc3ca3fb80/rpc/v0_7',
+    blastAPI: 'https://starknet-mainnet.public.blastapi.io',
     scanUrl: 'https://sepolia.starkscan.co/tx/',
     RPCURL: 'https://starknet-sepolia.infura.io/v3/8d11ac6606954ccc8b0ddeb6c132e24b'
 }
