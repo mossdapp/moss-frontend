@@ -21,7 +21,7 @@ const chainId = shortString.encodeShortString('SN_SEPOLIA'); //'0x534e5f5345504f
 
 const getNonce = async (address: string) => {
     try {
-        const res = await fetch(GlobalConfig.RPCURL, {
+        const res = await fetch(GlobalConfig.blastAPI, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
