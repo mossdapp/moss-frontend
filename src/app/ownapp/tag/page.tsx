@@ -30,7 +30,7 @@ export default function TagDapp() {
             const contract = new Contract(abi, account?.contractAddress, provider);
             const result = await contract.read_own_dapp(SocialDapp!.classHash, Selector, [address]);
             console.log(result) //transaction_hash
-            setTag(result[0]?.toString());
+            setTag(shortString.decodeShortString(result[0]?.toString()));
         } catch (e: any) {
             console.error("交易出错：", e);
             toast.error(e.message);

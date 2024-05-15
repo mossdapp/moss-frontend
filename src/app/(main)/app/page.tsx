@@ -7,8 +7,9 @@ import {useEffect, useState} from "react";
 import {provider} from "@/core/account";
 import {Contract} from "starknet";
 import {useLocalStorage} from "react-use";
+import {useAccount, useAccountABI} from "@/hooks/useAccount";
 
-const DappItem = ({item:it}:{item:any}) => {
+const DappItem = ({item:it, abi}:{item:any; abi: any}) => {
     const [data] = useLocalStorage<any>(GlobalConfig.mossWalletKey, null);
     const account = data?.account;
     const [state, setState] = useState(false);
@@ -17,7 +18,6 @@ const DappItem = ({item:it}:{item:any}) => {
     const getOwnDapps = async (it: any) => {
         console.log(it, 'ss')
         if(!it.classHash) return;
-        const {abi} = await provider.getClassAt(account.contractAddress);
         const contract = new Contract(abi, account.contractAddress, provider);
 
         const state = await contract.get_own_dapp_state(it.classHash);
@@ -26,8 +26,11 @@ const DappItem = ({item:it}:{item:any}) => {
     }
 
     useEffect(() => {
+        if(!abi) {
+            return;
+        }
         getOwnDapps(it);
-    }, [it]);
+    }, [it, abi]);
 
     if(!state) return null;
     return (
@@ -43,6 +46,8 @@ const DappItem = ({item:it}:{item:any}) => {
 
 const AppPage = () => {
     const router = useRouter();
+    const { account } = useAccount();
+    const { abi } = useAccountABI(account?.contractAddress)
 
     return (
         <div>
@@ -57,7 +62,7 @@ const AppPage = () => {
                 {
                     DappList?.map(it => {
                         return (
-                            <DappItem key={it.name} item={it} />
+                            <DappItem key={it.name} item={it} abi={abi} />
                         )
                     })
                 }

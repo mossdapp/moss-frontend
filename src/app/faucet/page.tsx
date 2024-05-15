@@ -70,7 +70,7 @@ export default function Faucet() {
             const response = await writeContract(account.publicKey, transactions);
             console.log(response) //transaction_hash
             push(response.transaction_hash);
-            toast('Transaction submitted successfully');
+            toast.success('Transaction submitted successfully');
             // router.back();
         } catch (e: any) {
             console.error("交易出错：", e);

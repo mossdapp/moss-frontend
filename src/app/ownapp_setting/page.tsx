@@ -39,7 +39,7 @@ export default function OwnappSetting() {
             ]
             const response = await writeContract(account.publicKey, transactions);
             console.log(response) //transaction_hash
-            toast('Transaction submitted successfully');
+            toast.success('Transaction submitted successfully');
         } catch (e: any) {
             console.error("交易出错：", e);
             toast.error(e.message);

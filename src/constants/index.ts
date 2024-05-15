@@ -9,13 +9,13 @@ export const ENVS = {
     ACCOUNT_CLASS_HASH: process.env.NEXT_PUBLIC_ACCOUNT_CLASS_HASH as string,
 }
 
-
+//https://starknet-sepolia.public.blastapi.io
 export const GlobalConfig = {
     mossWalletKey: 'moss:wallet',
     alchemyAPI: 'https://starknet-sepolia.g.alchemy.com/v2/GQYPecngmX2a1VBVYq2V9hL3FIMFqoHk',
-    blastAPI: 'https://starknet-mainnet.public.blastapi.io',
+    blastAPI: 'https://starknet-mainnet.public.blastapi.io', //TODO
     scanUrl: 'https://sepolia.starkscan.co/tx/',
-    RPCURL: 'https://starknet-sepolia.infura.io/v3/8d11ac6606954ccc8b0ddeb6c132e24b'
+    RPCURL: 'https://starknet-sepolia.g.alchemy.com/v2/GQYPecngmX2a1VBVYq2V9hL3FIMFqoHk',
 }
 
 
