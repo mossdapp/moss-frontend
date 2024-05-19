@@ -1,17 +1,14 @@
 'use client';
-
-import {GlobalConfig} from "@/constants";
-import {redirect} from "next/navigation";
-import {useLocalStorage} from "react-use";
-import {useEffect} from "react";
+import { redirect } from 'next/navigation';
+import { useEffect } from 'react';
+import { useAccount } from '@/hooks/useAccount';
 
 export default function Home() {
-  const [data] = useLocalStorage(GlobalConfig.mossWalletKey, null);
+  const { account } = useAccount();
 
   useEffect(() => {
-    redirect(data ? '/wallet' : '/create')
-  }, [data])
-
+    redirect(account ? '/wallet' : '/create');
+  }, [account]);
 
   return null;
 }

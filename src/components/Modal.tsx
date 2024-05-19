@@ -3,8 +3,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import React, { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTrigger } from '@/components/ui/dialog';
-import { ButtonProps } from 'react-day-picker';
-import { Button } from '@/components/ui/button';
+import { Button, ButtonProps } from '@/components/ui/button';
 
 export interface ModalProps {
   /**
