@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import useSWR from 'swr';
 import { queryNFTBalance, queryTokenBalance } from '@/services/wallet';
 import { NFTIcon } from '@/components/Icons';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { X } from 'lucide-react';
@@ -329,27 +329,25 @@ const BuyPanel = () => {
 };
 
 export default function NFTMarket() {
-  const { account } = useAccount();
-
-  const { push } = useTransactionStore();
-
   return (
-    <Container>
-      <TabBar title={`NFT Market`} />
-      <div className="py-4 space-y-6 px-2">
-        <Tabs defaultValue="market" className="w-full mt-8">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="market">Market</TabsTrigger>
-            <TabsTrigger value="nft">My NFT</TabsTrigger>
-          </TabsList>
-          <TabsContent value="market">
-            <BuyPanel />
-          </TabsContent>
-          <TabsContent value="nft">
-            <NFTPanel />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </Container>
+    <Suspense>
+      <Container>
+        <TabBar title={`NFT Market`} />
+        <div className="py-4 space-y-6 px-2">
+          <Tabs defaultValue="market" className="w-full mt-8">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="market">Market</TabsTrigger>
+              <TabsTrigger value="nft">My NFT</TabsTrigger>
+            </TabsList>
+            <TabsContent value="market">
+              <BuyPanel />
+            </TabsContent>
+            <TabsContent value="nft">
+              <NFTPanel />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </Container>
+    </Suspense>
   );
 }
