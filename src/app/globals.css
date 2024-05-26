@@ -78,3 +78,7 @@
 .toast div {
   word-break: break-all;
 }
+
+.shadowNone {
+  box-shadow: none !important;
+}
