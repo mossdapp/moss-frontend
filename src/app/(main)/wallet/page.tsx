@@ -1,6 +1,5 @@
 'use client';
-import { useLocalStorage } from 'react-use';
-import { GlobalConfig, TokenUrlMap } from '@/constants';
+import { TokenUrlMap } from '@/constants';
 import { Button } from '@/components/ui/button';
 import { deployAccount, getDeployHash, provider } from '@/core/account';
 import { arrayBufferToHex, bufferDecodeHexString } from '@/core/utils';
@@ -62,10 +61,10 @@ const NFTList = () => {
 
   return (
     <div className={'mt-4 grid grid-cols-2 gap-4'}>
-      {banlanceData?.data?.nfts?.edges?.map((item: any) => {
+      {banlanceData?.data?.nfts?.edges?.map((item: any, i: number) => {
         return (
           <div
-            key={item.id}
+            key={i}
             className={'cursor-pointer shadow'}
             onClick={() => {
               router.push(`/transfer/${item.node.nft_contract_address}?name=${item.node.name}`);

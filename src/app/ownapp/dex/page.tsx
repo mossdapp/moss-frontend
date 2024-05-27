@@ -6,7 +6,7 @@ import { useTransactionStore } from '@/components/PendingTransactions';
 import { DappList, TokenUrlMap } from '@/constants';
 import { Button } from '@/components/ui/button';
 import useSWR from 'swr';
-import { queryTokenBalance } from '@/services/wallet';
+import { fetchTokenInfo, queryTokenBalance } from '@/services/wallet';
 import { Suspense, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowDown } from 'lucide-react';
@@ -23,6 +23,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { createQueryString, shortenAddress } from '@/utils/common';
 import { TokenSelect } from '@/components/TokenSelect';
 import Image from 'next/image';
+import { useTokenListStore } from '@/hooks/useTokenList';
 
 const MarketDapp = DappList.find((it) => it.name === 'Dex');
 
@@ -38,6 +39,7 @@ const TokenPanel = () => {
 
   const { push } = useTransactionStore();
   const [loading, setLoading] = useState(false);
+  const { data, addToken } = useTokenListStore();
 
   const handleSubmit = async () => {
     console.log('submit');
@@ -76,6 +78,29 @@ const TokenPanel = () => {
     }
   };
 
+  const userTokenData = banlanceData?.data?.tokenBalancesByOwnerAddress?.map((item: any) => ({
+    symbol: item.contract_token_contract.symbol,
+    contractAddress: item.token_contract_address,
+    balance: item.balance_display,
+    icon: item.contract_token_contract.icon_url || TokenUrlMap.ERC20
+  }));
+
+  const handleSearch = async (address: string) => {
+    if (userTokenData?.find((it: any) => it.contractAddress?.toLowerCase() === address?.toLowerCase())) return;
+    const res = await fetchTokenInfo(address);
+    console.log(res, 'res');
+    addToken(res);
+  };
+
+  const tokenList = [...userTokenData, ...data];
+
+  const filterToken = (value: string) => {
+    if (!value) return tokenList;
+    return tokenList.filter((item: any) => item.contractAddress.toLowerCase() !== value.toLowerCase());
+  };
+
+  const sellBalance = tokenList.find((it: any) => it.contractAddress === sellToken)?.balance || 0;
+
   return (
     <div className={'mt-4'}>
       <div className={'rounded-xl bg-accent p-6 relative'}>
@@ -92,32 +117,21 @@ const TokenPanel = () => {
             onChange={(v) => {
               setSellToken(v);
             }}
-            options={banlanceData?.data?.tokenBalancesByOwnerAddress.map((item: any) => {
+            onSearch={handleSearch}
+            options={filterToken(buyToken)?.map((item: any) => {
               return {
                 label: (
                   <div className="flex items-center gap-2">
-                    <Image
-                      width={20}
-                      height={20}
-                      className={'h-5 object-contain'}
-                      src={item.contract_token_contract.icon_url || TokenUrlMap.ERC20}
-                      alt={item.contract_token_contract.symbol}
-                    />
-                    <span>{item.contract_token_contract.symbol}</span>
+                    <Image width={20} height={20} className={'h-5 object-contain'} src={item.icon} alt={item.symbol} />
+                    <span>{item.symbol}</span>
                   </div>
                 ),
-                value: item.token_contract_address
+                value: item.contractAddress
               };
             })}
           />
         </div>
-        <div className={'flex justify-end text-muted-foreground text-sm mt-2'}>
-          Balance:{' '}
-          {
-            banlanceData?.data?.tokenBalancesByOwnerAddress.find((it: any) => it.token_contract_address === sellToken)
-              ?.balance_display
-          }
-        </div>
+        <div className={'flex justify-end text-muted-foreground text-sm mt-2'}>Balance: {sellBalance}</div>
         <div
           className={
             'absolute bottom-[-20px] left-[50%] ml-[-20px] w-10 h-10 rounded-[12px] bg-secondary border-2 border-white flex justify-center items-center'
@@ -136,25 +150,20 @@ const TokenPanel = () => {
             className={'flex-1 p-0 text-lg border-none bg-transparent shadowNone'}
           />
           <TokenSelect
+            onSearch={handleSearch}
             value={buyToken}
             onChange={(v) => {
               setBuyToken(v);
             }}
-            options={banlanceData?.data?.tokenBalancesByOwnerAddress.map((item: any) => {
+            options={filterToken(sellToken)?.map((item: any) => {
               return {
                 label: (
                   <div className="flex items-center gap-2">
-                    <Image
-                      width={20}
-                      height={20}
-                      className={'h-5 object-contain'}
-                      src={item.contract_token_contract.icon_url || TokenUrlMap.ERC20}
-                      alt={item.contract_token_contract.symbol}
-                    />
-                    <span>{item.contract_token_contract.symbol}</span>
+                    <Image width={20} height={20} className={'h-5 object-contain'} src={item.icon} alt={item.symbol} />
+                    <span>{item.symbol}</span>
                   </div>
                 ),
-                value: item.token_contract_address
+                value: item.contractAddress
               };
             })}
           />
@@ -165,9 +174,9 @@ const TokenPanel = () => {
         onClick={handleSubmit}
         loading={loading}
         className={'w-full mt-6'}
-        disabled={!(buyToken && buyAmount && sellToken && sellAmount)}
+        disabled={!(buyToken && buyAmount && sellToken && sellAmount) || Number(sellBalance) === 0}
       >
-        Place a order
+        {Number(sellBalance) === 0 ? 'Insufficient balance' : 'Place a order'}
       </Button>
     </div>
   );
