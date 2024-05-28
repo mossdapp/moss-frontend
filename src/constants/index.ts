@@ -29,7 +29,7 @@ export const DappList = [
   {
     name: 'Dex',
     icon: DexImg.src,
-    classHash: '0x0734856d0ea7beb8c6b0b07932c7ebcd66e40e53efe840b2454716ebf7f51e93',
+    classHash: '0x06b6b085e3bfbfac69f915b5b5271642f7f09d15081c0fa73fe2364d96c2b8a1',
     path: '/ownapp/dex'
   },
   {
@@ -47,7 +47,7 @@ export const DappList = [
   {
     name: 'NFTMarket',
     icon: NFTMarketImg.src,
-    classHash: '0x03c0b449ba8604dc4cd858e81755547e6dd56f6951edb6f3dc1efbef3f62d217',
+    classHash: '0x01cbdd523bd902d89970558d5a82188b8423436fd29ec91a542c29e01bbb6968',
     path: '/ownapp/nft_market'
   },
   {

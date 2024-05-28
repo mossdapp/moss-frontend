@@ -6,14 +6,12 @@ import { useTransactionStore } from '@/components/PendingTransactions';
 import { DappList } from '@/constants';
 import { Button } from '@/components/ui/button';
 import useSWR from 'swr';
-import { queryNFTBalance, queryTokenBalance } from '@/services/wallet';
+import { fetchTokenInfo, queryNFTBalance, queryTokenBalance } from '@/services/wallet';
 import { NFTIcon } from '@/components/Icons';
 import { Suspense, useState } from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { X } from 'lucide-react';
 import * as React from 'react';
-import { cairo, Contract, hash, num, shortString, uint256 } from 'starknet';
+import { cairo, Contract, hash, num, uint256 } from 'starknet';
 import { provider, writeContract } from '@/core/account';
 import toast from 'react-hot-toast';
 import { Modal } from '@/components/Modal';
@@ -22,9 +20,9 @@ import { Input } from '@/components/ui/input';
 import { getDecimals } from '@/core/web3';
 import { formatUnits, parseUnits } from 'viem';
 import { Select } from '@/components/Select';
-import { useSearchParam } from 'react-use';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { createQueryString, shortenAddress } from '@/utils/common';
+import { chunk } from 'lodash';
 
 const MarketDapp = DappList.find((it) => it.name === 'NFTMarket');
 
@@ -158,16 +156,15 @@ const ListModal = ({ nftContract, tokenID }: { nftContract: string; tokenID: str
 const BuyModal = ({
   order,
   orderID,
-  open,
-  setOpen,
-  saler
+  saler,
+  onSuccess
 }: {
   order: any;
   orderID: string;
-  open: boolean;
-  setOpen: (v: boolean) => void;
   saler: string;
+  onSuccess: () => void;
 }) => {
+  const [open, setOpen] = useState(false);
   const { account } = useAccount();
   const { push } = useTransactionStore();
   const [loading, setLoading] = useState(false);
@@ -204,6 +201,7 @@ const BuyModal = ({
       if (result.execution_status === 'SUCCEEDED') {
         setOpen(false);
         toast.success('Transaction has been confirmed');
+        onSuccess();
       } else {
         toast.error(result.revert_reason);
       }
@@ -225,14 +223,15 @@ const BuyModal = ({
       confirmButtonProps={{
         loading
       }}
+      trigger={
+        <Button loading={loading} className={'w-full mt-2'} size={'sm'}>
+          Buy
+        </Button>
+      }
     >
       <div>
         <div className="flex justify-between items-center">
           <div className="text-lg font-semibold">Buy NFT</div>
-        </div>
-        <div className="mt-4">
-          <Label>Price</Label>
-          <div>{order.formattedPrice}</div>
         </div>
         <div className="mt-4">
           <Label>NFT</Label>
@@ -242,9 +241,15 @@ const BuyModal = ({
           <Label>Token ID</Label>
           <div>{order.token_id}</div>
         </div>
+        {/*<div className="mt-4">*/}
+        {/*  <Label>Sale Token</Label>*/}
+        {/*  <div>{shortenAddress(order.asset_contract)}</div>*/}
+        {/*</div>*/}
         <div className="mt-4">
-          <Label>Sale Token</Label>
-          <div>{shortenAddress(order.asset_contract)}</div>
+          <Label>Price</Label>
+          <div>
+            {order.formattedPrice} {order.tokenInfo?.symbol}
+          </div>
         </div>
       </div>
     </Modal>
@@ -256,14 +261,47 @@ const BuyPanel = () => {
   const salerAddress = searchParams.get('saler');
   const [saler, setSaler] = useState('');
   const [open, setOpen] = useState(false);
-  console.log(open, 'ss');
   const { account } = useAccount();
   const { abi } = useAccountABI(account?.contractAddress);
   const { push } = useTransactionStore();
   const [id, setId] = useState('');
-  const [order, setOrder] = useState<any>(null);
   const router = useRouter();
   const pathname = usePathname();
+
+  const getOrderList = async () => {
+    try {
+      const Selector = hash.getSelectorFromName('get_active_orders');
+      const contract = new Contract(abi!, salerAddress!, provider);
+      console.log(salerAddress, abi);
+      const result = await contract.read_own_dapp(MarketDapp!.classHash, Selector, []);
+      const [lenInt, ...rest] = result;
+      const len = Number(BigInt(lenInt).toString());
+      console.log(len, rest, result);
+      if (len > 0) {
+        const orderArr = chunk(rest, 8)?.map(async (it: any[]) => {
+          const token = await fetchTokenInfo(num.toHex(it[4]), account?.contractAddress);
+          console.log(it, token, 'it');
+          const price = uint256.uint256ToBN({ low: it[5], high: it[6] }).toString();
+          return {
+            order_id: BigInt(it[0]).toString(),
+            nft_contract: num.toHex(it[1]),
+            token_id: uint256.uint256ToBN({ low: it[2], high: it[3] }).toString(),
+            asset_contract: num.toHex(it[4]),
+            price: price,
+            seller: it[7],
+            tokenInfo: token,
+            formattedPrice: formatUnits(BigInt(price), Number(token!.decimals))
+          };
+        });
+        return await Promise.all(orderArr);
+      }
+      return [];
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const { data, mutate } = useSWR(abi && salerAddress ? ['nft-orders', salerAddress, abi] : null, getOrderList);
 
   const getOrder = async () => {
     if (!id) {
@@ -291,14 +329,6 @@ const BuyPanel = () => {
         })
         .toString();
       const decimals = await getDecimals(asset_contract as string);
-
-      setOrder({
-        nft_contract,
-        token_id,
-        asset_contract,
-        price,
-        formattedPrice: formatUnits(BigInt(price), Number(decimals))
-      });
       setOpen(true);
     } catch (e: any) {
       toast.error(e.message);
@@ -309,13 +339,43 @@ const BuyPanel = () => {
     const params = createQueryString(searchParams, 'saler', saler);
     router.push(pathname + '?' + params);
   };
+  console.log(salerAddress, data);
 
   return (
     <div className={'py-8'}>
       {salerAddress ? (
-        <div className={'flex gap-2 items-center'}>
-          <Input placeholder={'Input order id to search order'} value={id} onChange={(e) => setId(e.target.value)} />
-          <Button onClick={getOrder}>Search</Button>
+        <div className={'space-y-6'}>
+          {data?.length ? (
+            data?.map((it, index) => {
+              return (
+                <div key={index} className={'flex justify-between border rounded-xl py-2 px-4'}>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={
+                        'text-primary text-md font-medium w-6 h-6 rounded-full bg-secondary flex justify-center items-center'
+                      }
+                    >
+                      {it.order_id}
+                    </div>
+                    <div className="text-center">
+                      <NFTIcon className={'w-10 h-10'} />
+                      <div>#{it.token_id}</div>
+                    </div>
+                  </div>
+                  <div className="p-2">
+                    <div>
+                      <div>
+                        {it.formattedPrice} {it.tokenInfo?.symbol}
+                      </div>
+                      <BuyModal order={it} orderID={it.order_id} saler={salerAddress!} onSuccess={() => mutate()} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className={'text-center py-6 text-primary/60'}>No Data</div>
+          )}
         </div>
       ) : (
         <div className={'flex gap-2 items-center'}>
@@ -323,7 +383,6 @@ const BuyPanel = () => {
           <Button onClick={handleEnter}>Enter</Button>
         </div>
       )}
-      {order && <BuyModal order={order} orderID={id} open={open} setOpen={setOpen} saler={salerAddress!} />}
     </div>
   );
 };
