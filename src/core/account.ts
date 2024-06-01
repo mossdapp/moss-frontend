@@ -1,121 +1,108 @@
+import { hash, CallData, RpcProvider, transaction, Call, shortString } from 'starknet';
 import {
-    hash,
-    CallData,
-    RpcProvider,
-    transaction,
-    Call, shortString
-} from "starknet";
-import {
-    arrayBufferToHex,
-    bufferDecodeHexString,
-    extractRSFromSignature,
-    padHexTo256Bits,
-    splitHexTo128Bits
-} from "@/core/utils";
-import {ENVS, GlobalConfig} from "@/constants";
+  arrayBufferToHex,
+  bufferDecodeHexString,
+  extractRSFromSignature,
+  padHexTo256Bits,
+  splitHexTo128Bits
+} from '@/core/utils';
+import { ENVS, GlobalConfig } from '@/constants';
 
-export const provider = new RpcProvider({nodeUrl: GlobalConfig.RPCURL});
+export const provider = new RpcProvider({ nodeUrl: GlobalConfig.RPCURL });
 
 const chainId = shortString.encodeShortString('SN_SEPOLIA'); //'0x534e5f5345504f4c4941'; //sepolia
 
-
 const getNonce = async (address: string) => {
-    try {
-        const res = await fetch(GlobalConfig.RPCURL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                jsonrpc: '2.0',
-                method: 'starknet_getNonce',
-                params: ['latest', address],
-                id: 0
-            })
-        });
-        const data = await res.json();
-        if (data.error) {
-            throw new Error(data.error.message);
-        }
-        console.log(data, 'nonce')
-        return parseInt(data.result, 16);
-    } catch (e) {
-        console.error(e);
-        return 0;
+  try {
+    const res = await fetch(GlobalConfig.RPCURL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'starknet_getNonce',
+        params: ['latest', address],
+        id: 0
+      })
+    });
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(data.error.message);
     }
-}
+    console.log(data, 'nonce');
+    return parseInt(data.result, 16);
+  } catch (e) {
+    console.error(e);
+    return 0;
+  }
+};
 
 export const getAccountByPublicKey = (publicKey: string) => {
-    const AApublicKey = publicKey;
+  const AApublicKey = publicKey;
 
-    console.log(`Public Key: ${AApublicKey}`);
+  console.log(`Public Key: ${AApublicKey}`);
 
-    // 去除开头的'04'并分割剩余的字符串为四个部分
-    const trimmedPublicKey = AApublicKey.slice(2);
-    const part1 = trimmedPublicKey.slice(0, 32);
-    const part2 = trimmedPublicKey.slice(32, 64);
-    const part3 = trimmedPublicKey.slice(64, 96);
-    const part4 = trimmedPublicKey.slice(96, 128);
+  // 去除开头的'04'并分割剩余的字符串为四个部分
+  const trimmedPublicKey = AApublicKey.slice(2);
+  const part1 = trimmedPublicKey.slice(0, 32);
+  const part2 = trimmedPublicKey.slice(32, 64);
+  const part3 = trimmedPublicKey.slice(64, 96);
+  const part4 = trimmedPublicKey.slice(96, 128);
 
-// 生成AAstarkKeyPub的值（取第一个16字节）
-    const AAstarkKeyPub = `0x${part1}`;
-    console.log('publicKey =', AAstarkKeyPub);
+  // 生成AAstarkKeyPub的值（取第一个16字节）
+  const AAstarkKeyPub = `0x${part1}`;
+  console.log('publicKey =', AAstarkKeyPub);
 
-// 生成AAaccountConstructorCallData的值
-// 注意：顺序是 part2, part1, part4, part3
-    const AAaccountConstructorCallData = CallData.compile([
-        `0x${part2}`,
-        `0x${part1}`,
-        `0x${part4}`,
-        `0x${part3}`,
-    ]);
+  // 生成AAaccountConstructorCallData的值
+  // 注意：顺序是 part2, part1, part4, part3
+  const AAaccountConstructorCallData = CallData.compile([`0x${part2}`, `0x${part1}`, `0x${part4}`, `0x${part3}`]);
 
+  const AAaccountClassHash = ENVS.ACCOUNT_CLASS_HASH;
+  console.log('Customized account class hash =', AAaccountClassHash);
 
-    const AAaccountClassHash = ENVS.ACCOUNT_CLASS_HASH;
-    console.log('Customized account class hash =', AAaccountClassHash);
+  const AAcontractAddress = hash.calculateContractAddressFromHash(
+    AAstarkKeyPub,
+    AAaccountClassHash,
+    AAaccountConstructorCallData,
+    0
+  );
 
-    const AAcontractAddress = hash.calculateContractAddressFromHash(
-        AAstarkKeyPub,
-        AAaccountClassHash,
-        AAaccountConstructorCallData,
-        0
-    );
+  console.log('Precalculated account address=', AAcontractAddress);
 
-    console.log('Precalculated account address=', AAcontractAddress);
-
-    return {
-        contractAddress: padHexTo256Bits(AAcontractAddress),
-        classHash: AAaccountClassHash,
-        callData: AAaccountConstructorCallData,
-        salt: AAstarkKeyPub,
-        publicKey,
-    };
-}
+  return {
+    contractAddress: padHexTo256Bits(AAcontractAddress),
+    classHash: AAaccountClassHash,
+    callData: AAaccountConstructorCallData,
+    salt: AAstarkKeyPub,
+    publicKey
+  };
+};
 
 export const getDeployHash = async (publicKey: string) => {
-    const {contractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
+  const { contractAddress, classHash, callData, salt } = getAccountByPublicKey(publicKey);
 
-    // 获取交易hash
-    const deployTransctionHash = hash.calculateDeployAccountTransactionHash(
-        contractAddress,
-        classHash,
-        callData,
-        salt,
-        1,
-        1000000000000000,
-        chainId as any,
-        0
-    );
+  // 获取交易hash
+  const deployTransctionHash = hash.calculateDeployAccountTransactionHash(
+    contractAddress,
+    classHash,
+    callData,
+    salt,
+    1,
+    1000000000000000,
+    chainId as any,
+    0
+  );
 
-    let deployHash = deployTransctionHash.startsWith('0x') ? deployTransctionHash.substring(2) : deployTransctionHash;
+  let deployHash = deployTransctionHash.startsWith('0x') ? deployTransctionHash.substring(2) : deployTransctionHash;
 
-    // 确保deployHash为64位长度
-    deployHash = deployHash.padStart(64, '0');
+  // 确保deployHash为64位长度
+  deployHash = deployHash.padStart(64, '0');
 
-    console.log("deployHash = ", deployHash);
+  console.log('deployHash = ', deployHash);
 
-    return deployHash;
-}
+  return deployHash;
+};
 
 // const SimpleStorageAddress = '0x4ef8da68c94b71859f3b34cdce6b6128f03b10b568b523551cc28973e6f2f2a';
 //
@@ -128,142 +115,140 @@ export const getDeployHash = async (publicKey: string) => {
 // ];
 
 export const getInvokeHash = async (publicKey: string, transactions: Call[]) => {
-    const {contractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
+  const { contractAddress, classHash, callData, salt } = getAccountByPublicKey(publicKey);
 
-    // 1 must be string
-    const mycalldata = transaction.getExecuteCalldata(transactions, '1');
+  // 1 must be string
+  const mycalldata = transaction.getExecuteCalldata(transactions, '1');
 
-    const nonce = await getNonce(contractAddress);
+  const nonce = await getNonce(contractAddress);
 
-    console.log("mycalldata = ", transactions, mycalldata, nonce);
+  console.log('mycalldata = ', transactions, mycalldata, nonce);
 
-    // 获取交易hash  calldata is RawCalldata,RawCalldata BigNumberish array, use CallData.compile() to convert to Calldata
-    const invokeTransctionHash = hash.calculateTransactionHash(
-        contractAddress,
-        1,    // version
-        mycalldata,
-        3000000000000000,  //maxfee
-        chainId as any,
-        nonce
-    );
+  // 获取交易hash  calldata is RawCalldata,RawCalldata BigNumberish array, use CallData.compile() to convert to Calldata
+  const invokeTransctionHash = hash.calculateTransactionHash(
+    contractAddress,
+    1, // version
+    mycalldata,
+    5000000000000000, //maxfee
+    chainId as any,
+    nonce
+  );
 
-    let invokeHash = invokeTransctionHash.startsWith('0x') ? invokeTransctionHash.substring(2) : invokeTransctionHash;
+  let invokeHash = invokeTransctionHash.startsWith('0x') ? invokeTransctionHash.substring(2) : invokeTransctionHash;
 
-    // 确保deployHash为64位长度
-    invokeHash = invokeHash.padStart(64, '0');
+  // 确保deployHash为64位长度
+  invokeHash = invokeHash.padStart(64, '0');
 
-    console.log("invokeHash = ", invokeHash);
+  console.log('invokeHash = ', invokeHash);
 
-    return invokeHash;
-}
+  return invokeHash;
+};
 
 export async function deployAccount(publicKey: string, signHash: string, signCount: number) {
-    const {contractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
+  const { contractAddress, classHash, callData, salt } = getAccountByPublicKey(publicKey);
 
-    console.log("signHash = ", signHash, contractAddress);
-    const {rHex, sHex} = extractRSFromSignature(signHash);
-    console.log("rHex = ", rHex);
-    console.log("sHex = ", sHex);
+  console.log('signHash = ', signHash, contractAddress);
+  const { rHex, sHex } = extractRSFromSignature(signHash);
+  console.log('rHex = ', rHex);
+  console.log('sHex = ', sHex);
 
-    // 对r和s的16进制表示进行分割
-    const [rHexFirstHalf, rHexSecondHalf] = splitHexTo128Bits(rHex);
-    const [sHexFirstHalf, sHexSecondHalf] = splitHexTo128Bits(sHex);
+  // 对r和s的16进制表示进行分割
+  const [rHexFirstHalf, rHexSecondHalf] = splitHexTo128Bits(rHex);
+  const [sHexFirstHalf, sHexSecondHalf] = splitHexTo128Bits(sHex);
 
-    // 将分割后的部分组合成一个数组
-    const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, 1 , signCount];
+  // 将分割后的部分组合成一个数组
+  const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, 1, signCount];
 
-    console.log("signatureArray = ", hexPartsArray);
+  console.log('signatureArray = ', hexPartsArray);
 
-    // 准备details对象
-    const details = {
-        maxFee:  1000000000000000, // 设定最大费用，根据需要调整
-        version: 1, // 合约版本
-        nonce: 0, // 随机数，根据需要调整
-    };
+  // 准备details对象
+  const details = {
+    maxFee: 1000000000000000, // 设定最大费用，根据需要调整
+    version: 1, // 合约版本
+    nonce: 0 // 随机数，根据需要调整
+  };
 
-    // 调用 deployAccountContract 函数
-    const deployTransaction = {
-        classHash: classHash,
-        constructorCalldata: callData,
-        addressSalt: salt,
-        signature: hexPartsArray as any, // 需要字符串数据格式
-    };
-    console.log("**********:", deployTransaction, details);
+  // 调用 deployAccountContract 函数
+  const deployTransaction = {
+    classHash: classHash,
+    constructorCalldata: callData,
+    addressSalt: salt,
+    signature: hexPartsArray as any // 需要字符串数据格式
+  };
+  console.log('**********:', deployTransaction, details);
 
-    // add ,"1" after AAprivateKey if this account is not a Cairo 0 contract
-    const response = await provider.deployAccountContract(deployTransaction, details);
-    console.log('部署成功，交易信息：', response);
-    return response;
+  // add ,"1" after AAprivateKey if this account is not a Cairo 0 contract
+  const response = await provider.deployAccountContract(deployTransaction, details);
+  console.log('部署成功，交易信息：', response);
+  return response;
 }
 
 export async function invokeTx(publicKey: string, signHash: string, signCount: number, transactions: Call[]) {
-    const {contractAddress: AAcontractAddress, classHash, callData, salt} = getAccountByPublicKey(publicKey);
-    // 1 must be string
-    const mycalldata = transaction.getExecuteCalldata(transactions, '1');
+  const { contractAddress: AAcontractAddress, classHash, callData, salt } = getAccountByPublicKey(publicKey);
+  // 1 must be string
+  const mycalldata = transaction.getExecuteCalldata(transactions, '1');
 
-    const nonce = await getNonce(AAcontractAddress);
-    const {rHex, sHex} = extractRSFromSignature(signHash);
+  const nonce = await getNonce(AAcontractAddress);
+  const { rHex, sHex } = extractRSFromSignature(signHash);
 
+  console.log('rHex = ', rHex);
+  console.log('sHex = ', sHex);
 
-    console.log("rHex = ", rHex);
-    console.log("sHex = ", sHex);
+  // 对r和s的16进制表示进行分割
+  const [rHexFirstHalf, rHexSecondHalf] = splitHexTo128Bits(rHex);
+  const [sHexFirstHalf, sHexSecondHalf] = splitHexTo128Bits(sHex);
 
-    // 对r和s的16进制表示进行分割
-    const [rHexFirstHalf, rHexSecondHalf] = splitHexTo128Bits(rHex);
-    const [sHexFirstHalf, sHexSecondHalf] = splitHexTo128Bits(sHex);
+  // 将分割后的部分组合成一个数组
+  const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, 1, signCount];
 
+  console.log('signatureArray = ', hexPartsArray);
 
-    // 将分割后的部分组合成一个数组
-    const hexPartsArray = [rHexSecondHalf, rHexFirstHalf, sHexSecondHalf, sHexFirstHalf, 1, signCount];
+  // 准备details对象
+  const details = {
+    maxFee: 5000000000000000, // 设定最大费用，根据需要调整, must be the same as hash function
+    version: 1, // 合约版本
+    nonce: nonce // 随机数，根据需要调整
+  };
+  // invoke simple storage Contract 函数  calldata is Calldata (decimal-string array)
+  const invokeTransaction = {
+    contractAddress: AAcontractAddress,
+    calldata: mycalldata,
+    signature: hexPartsArray as any // 需要字符串数据格式
+  };
+  console.log('**********:', invokeTransaction, details);
 
-    console.log("signatureArray = ", hexPartsArray);
-
-    // 准备details对象
-    const details = {
-        maxFee:  3000000000000000, // 设定最大费用，根据需要调整, must be the same as hash function
-        version: 1, // 合约版本
-        nonce: nonce, // 随机数，根据需要调整
-    };
-    // invoke simple storage Contract 函数  calldata is Calldata (decimal-string array)
-    const invokeTransaction = {
-        contractAddress: AAcontractAddress,
-        calldata: mycalldata,
-        signature: hexPartsArray as any // 需要字符串数据格式
-    };
-    console.log("**********:", invokeTransaction, details);
-
-    //const res = await myTestContract.increase_balance(myCall.calldata);
-    // add ,"1" after AAprivateKey if this account is not a Cairo 0 contract
-    const response = await provider.invokeFunction(invokeTransaction, details);
-    console.log('成功，交易信息：', response);
-    return response;
+  //const res = await myTestContract.increase_balance(myCall.calldata);
+  // add ,"1" after AAprivateKey if this account is not a Cairo 0 contract
+  const response = await provider.invokeFunction(invokeTransaction, details);
+  console.log('成功，交易信息：', response);
+  return response;
 }
 
 export const writeContract = async (publicKey: string, transactions: Call[]) => {
-    console.log('invoke', transactions)
-    const hash = await getInvokeHash(publicKey, transactions);
+  console.log('invoke', transactions);
+  const hash = await getInvokeHash(publicKey, transactions);
 
-    const publicKeyCredentialRequestOptions = {
-        challenge: bufferDecodeHexString(hash),
-        rpId: window.location.hostname, // 确保与当前页面的域名相匹配
-    }
-    const cred = await navigator.credentials.get({publicKey: publicKeyCredentialRequestOptions}) as any;
+  const publicKeyCredentialRequestOptions = {
+    challenge: bufferDecodeHexString(hash),
+    rpId: window.location.hostname // 确保与当前页面的域名相匹配
+  };
+  const cred = (await navigator.credentials.get({ publicKey: publicKeyCredentialRequestOptions })) as any;
 
-    const signature = cred?.response.signature;
-    const signatureHex = arrayBufferToHex(signature);
-    const authenticatorData = cred?.response.authenticatorData;
-    const authenticatorDataHex = arrayBufferToHex(authenticatorData);
+  const signature = cred?.response.signature;
+  const signatureHex = arrayBufferToHex(signature);
+  const authenticatorData = cred?.response.authenticatorData;
+  const authenticatorDataHex = arrayBufferToHex(authenticatorData);
 
-    // 获取最后四个字节的十六进制字符串
-    const lastFourBytesHex = authenticatorDataHex.slice(-10);  // 获取最后8个字符
+  // 获取最后四个字节的十六进制字符串
+  const lastFourBytesHex = authenticatorDataHex.slice(-10); // 获取最后8个字符
 
-    // 解析十六进制为整数，假设大端序
-    const signCount = parseInt(lastFourBytesHex, 16);  // 只取最后两位数
-    //
-    const clientDataJSON = cred?.response.clientDataJSON;
-    const clientDataJSONHex = arrayBufferToHex(clientDataJSON);
-    console.log(`Client Data JSON: ${clientDataJSONHex}`);
+  // 解析十六进制为整数，假设大端序
+  const signCount = parseInt(lastFourBytesHex, 16); // 只取最后两位数
+  //
+  const clientDataJSON = cred?.response.clientDataJSON;
+  const clientDataJSONHex = arrayBufferToHex(clientDataJSON);
+  console.log(`Client Data JSON: ${clientDataJSONHex}`);
 
-    const response = await invokeTx(publicKey, signatureHex.slice(2), signCount, transactions);
-    return response;
-}
+  const response = await invokeTx(publicKey, signatureHex.slice(2), signCount, transactions);
+  return response;
+};

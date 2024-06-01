@@ -213,7 +213,8 @@ export const fetchTokenInfo = async (address: string, user?: string) => {
           provider
         );
 
-        const balanceWei = await contractIns.balanceOf(user);
+        console.log(contractIns, contract.token_contract_address);
+        const balanceWei = await contractIns.balance_of(user);
 
         balance = formatUnits(balanceWei, contract.decimals);
       }

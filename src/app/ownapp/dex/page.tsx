@@ -9,7 +9,7 @@ import useSWR from 'swr';
 import { fetchTokenInfo, queryTokenBalance } from '@/services/wallet';
 import { Suspense, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowDown } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowRightLeft } from 'lucide-react';
 import * as React from 'react';
 import { cairo, Contract, hash, num, uint256 } from 'starknet';
 import { provider, writeContract } from '@/core/account';
@@ -24,6 +24,8 @@ import { createQueryString, shortenAddress } from '@/utils/common';
 import { TokenSelect } from '@/components/TokenSelect';
 import Image from 'next/image';
 import { useTokenListStore } from '@/hooks/useTokenList';
+import { chunk } from 'lodash';
+import { Loading } from '@/components/Loading';
 
 const MarketDapp = DappList.find((it) => it.name === 'Dex');
 
@@ -78,12 +80,13 @@ const TokenPanel = () => {
     }
   };
 
-  const userTokenData = banlanceData?.data?.tokenBalancesByOwnerAddress?.map((item: any) => ({
-    symbol: item.contract_token_contract.symbol,
-    contractAddress: item.token_contract_address,
-    balance: item.balance_display,
-    icon: item.contract_token_contract.icon_url || TokenUrlMap.ERC20
-  }));
+  const userTokenData =
+    banlanceData?.data?.tokenBalancesByOwnerAddress?.map((item: any) => ({
+      symbol: item.contract_token_contract.symbol,
+      contractAddress: item.token_contract_address,
+      balance: item.balance_display,
+      icon: item.contract_token_contract.icon_url || TokenUrlMap.ERC20
+    })) || [];
 
   const handleSearch = async (address: string) => {
     if (userTokenData?.find((it: any) => it.contractAddress?.toLowerCase() === address?.toLowerCase())) return;
@@ -182,19 +185,8 @@ const TokenPanel = () => {
   );
 };
 
-const BuyModal = ({
-  order,
-  orderID,
-  open,
-  setOpen,
-  saler
-}: {
-  order: any;
-  orderID: string;
-  open: boolean;
-  setOpen: (v: boolean) => void;
-  saler: string;
-}) => {
+const BuyModal = ({ order, orderID, saler }: { order: any; orderID: string; saler: string }) => {
+  const [open, setOpen] = useState(false);
   const { account } = useAccount();
   const { push } = useTransactionStore();
   const [loading, setLoading] = useState(false);
@@ -212,7 +204,7 @@ const BuyModal = ({
         {
           contractAddress: account?.contractAddress,
           entrypoint: 'execute_own_dapp',
-          calldata: [TokenManageDapp!.classHash, Selector, [order.sellToken, saler, res.low, res.high]]
+          calldata: [TokenManageDapp!.classHash, Selector, [order.token_sell, saler, res.low, res.high]]
         },
         {
           contractAddress: saler,
@@ -250,6 +242,7 @@ const BuyModal = ({
       confirmButtonProps={{
         loading
       }}
+      trigger={<Button>Buy</Button>}
     >
       <div>
         <div className="flex justify-between items-center">
@@ -257,19 +250,21 @@ const BuyModal = ({
         </div>
         <div className="mt-4">
           <Label>Sell Token</Label>
-          <div>{shortenAddress(order.buyToken)}</div>
-        </div>
-        <div className="mt-4">
-          <Label>Sell Amount</Label>
-          <div>{order.formattedBuyAmount}</div>
+          <div className={'flex gap-2 items-center'}>
+            <div>{formatUnits(BigInt(order.amount_buy), order.tokenBuyInfo!.decimals)}</div>
+            <div>
+              {order.tokenBuyInfo.symbol} {shortenAddress(order.buyToken)}
+            </div>
+          </div>
         </div>
         <div className="mt-4">
           <Label>Buy Token</Label>
-          <div>{shortenAddress(order.sellToken)}</div>
-        </div>
-        <div className="mt-4">
-          <Label>Buy Amount</Label>
-          <div>{order.formattedSellAmount}</div>
+          <div className={'flex gap-2 items-center'}>
+            <div>{formatUnits(BigInt(order.amount_sell), order.tokenSellInfo!.decimals)}</div>
+            <div>
+              {order.tokenSellInfo.symbol} {shortenAddress(order.sellToken)}
+            </div>
+          </div>
         </div>
       </div>
     </Modal>
@@ -280,8 +275,6 @@ const BuyPanel = () => {
   const searchParams = useSearchParams();
   const salerAddress = searchParams.get('saler');
   const [saler, setSaler] = useState('');
-  const [open, setOpen] = useState(false);
-  console.log(open, 'ss');
   const { account } = useAccount();
   const { abi } = useAccountABI(account?.contractAddress);
   const { push } = useTransactionStore();
@@ -289,6 +282,45 @@ const BuyPanel = () => {
   const [order, setOrder] = useState<any>(null);
   const router = useRouter();
   const pathname = usePathname();
+
+  const getOrderList = async () => {
+    try {
+      const Selector = hash.getSelectorFromName('get_active_orders');
+      const contract = new Contract(abi!, salerAddress!, provider);
+      console.log(salerAddress, abi);
+      const result = await contract.read_own_dapp(MarketDapp!.classHash, Selector, []);
+      const [lenInt, ...rest] = result;
+      const len = Number(BigInt(lenInt).toString());
+      console.log(len, rest, result);
+      if (len > 0) {
+        const orderArr = chunk(rest, 8)?.map(async (it: any[]) => {
+          console.log(it, 'it');
+          const tokenSellInfo = await fetchTokenInfo(num.toHex(it[1]), account?.contractAddress);
+          const tokenBuyInfo = await fetchTokenInfo(num.toHex(it[2]), account?.contractAddress);
+          return {
+            id: BigInt(it[0]).toString(),
+            token_sell: num.toHex(it[1]),
+            token_buy: num.toHex(it[2]),
+            amount_sell: uint256.uint256ToBN({ low: it[3], high: it[4] }).toString(),
+            amount_buy: uint256.uint256ToBN({ low: it[5], high: it[6] }).toString(),
+            is_active: it[7],
+            tokenSellInfo: tokenSellInfo,
+            tokenBuyInfo: tokenBuyInfo
+          };
+        });
+        return await Promise.all(orderArr);
+      }
+      return [];
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  console.log(abi, salerAddress);
+  const { data, mutate, isLoading } = useSWR(
+    abi && salerAddress ? ['dex-orders', salerAddress, abi] : null,
+    getOrderList
+  );
 
   const getOrder = async () => {
     if (!id) {
@@ -327,7 +359,6 @@ const BuyPanel = () => {
         formattedSellAmount: formatUnits(BigInt(sellAmount), Number(decimal1)),
         formattedBuyAmount: formatUnits(BigInt(buyAmount), Number(decimal2))
       });
-      setOpen(true);
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -341,9 +372,43 @@ const BuyPanel = () => {
   return (
     <div className={'py-8'}>
       {salerAddress ? (
-        <div className={'flex gap-2 items-center'}>
-          <Input placeholder={'Input order id to search order'} value={id} onChange={(e) => setId(e.target.value)} />
-          <Button onClick={getOrder}>Search</Button>
+        <div className={'space-y-6'}>
+          {isLoading && <Loading />}
+          {data?.map((it, index) => {
+            return (
+              <div key={index} className={'border rounded-2xl shadow p-5 flex justify-between items-center'}>
+                <div className={'flex gap-2 items-center'}>
+                  <div className={'flex items-center gap-2'}>
+                    <img
+                      src={TokenUrlMap[it.tokenSellInfo!.symbol as keyof typeof TokenUrlMap] || TokenUrlMap.ERC20}
+                      alt="token"
+                      className={'h-6'}
+                    />
+                    <div className="flex gap-1">
+                      <span>{formatUnits(BigInt(it.amount_sell), it.tokenSellInfo!.decimals)}</span>
+                      <span>{it.tokenSellInfo?.symbol}</span>
+                    </div>
+                  </div>
+                  <ArrowRight size={16} className={'text-gray-500'} />
+                  <div className={'flex items-center gap-2'}>
+                    <img
+                      src={TokenUrlMap[it.tokenBuyInfo!.symbol as keyof typeof TokenUrlMap] || TokenUrlMap.ERC20}
+                      alt="token"
+                      className={'h-6'}
+                    />
+                    <div className="flex gap-1">
+                      <span>{formatUnits(BigInt(it.amount_buy), it.tokenBuyInfo!.decimals)}</span>
+                      <span>{it.tokenBuyInfo?.symbol}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <BuyModal order={it} orderID={it.id} saler={salerAddress!} />
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className={'flex gap-2 items-center'}>
@@ -351,7 +416,6 @@ const BuyPanel = () => {
           <Button onClick={handleEnter}>Enter</Button>
         </div>
       )}
-      {order && <BuyModal order={order} orderID={id} open={open} setOpen={setOpen} saler={salerAddress!} />}
     </div>
   );
 };
