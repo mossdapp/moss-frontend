@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { getDecimals } from '@/core/web3';
 import { formatUnits, parseUnits } from 'viem';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { createQueryString, shortenAddress } from '@/utils/common';
 import { TokenSelect } from '@/components/TokenSelect';
 import Image from 'next/image';
@@ -32,7 +32,7 @@ const MarketDapp = DappList.find((it) => it.name === 'Dex');
 const TokenPanel = () => {
   const { account } = useAccount();
   const { data: banlanceData } = useSWR(['token-balance', account?.contractAddress], () =>
-    queryTokenBalance(account?.contractAddress)
+    queryTokenBalance(account!.contractAddress)
   );
   const [sellToken, setSellToken] = useState('');
   const [buyToken, setBuyToken] = useState('');
@@ -56,12 +56,12 @@ const TokenPanel = () => {
       const res1 = cairo.uint256(buyAmountWei.toString());
       const transactions = [
         {
-          contractAddress: account?.contractAddress,
+          contractAddress: account!.contractAddress,
           entrypoint: 'execute_own_dapp',
           calldata: [MarketDapp!.classHash, Selector, [sellToken, buyToken, res.low, res.high, res1.low, res1.high]]
         }
       ];
-      const response = await writeContract(account.publicKey, transactions);
+      const response = await writeContract(account!.publicKey, transactions);
       console.log(response); //transaction_hash
       push(response.transaction_hash);
       toast.success('Transaction submitted successfully');
@@ -202,7 +202,7 @@ const BuyModal = ({ order, orderID, saler }: { order: any; orderID: string; sale
       const BuySelector = hash.getSelectorFromName('buy_order');
       const transactions = [
         {
-          contractAddress: account?.contractAddress,
+          contractAddress: account!.contractAddress,
           entrypoint: 'execute_own_dapp',
           calldata: [TokenManageDapp!.classHash, Selector, [order.token_sell, saler, res.low, res.high]]
         },
@@ -212,7 +212,7 @@ const BuyModal = ({ order, orderID, saler }: { order: any; orderID: string; sale
           calldata: [MarketDapp!.classHash, BuySelector, [TokenManageDapp?.classHash, orderID]]
         }
       ];
-      const response = await writeContract(account.publicKey, transactions);
+      const response = await writeContract(account!.publicKey, transactions);
       console.log(response); //transaction_hash
       push(response.transaction_hash);
       toast.success('Transaction submitted successfully');
@@ -272,21 +272,17 @@ const BuyModal = ({ order, orderID, saler }: { order: any; orderID: string; sale
 };
 
 const BuyPanel = () => {
-  const searchParams = useSearchParams();
-  const salerAddress = searchParams.get('saler');
+  const { address: salerAddress } = useParams();
   const [saler, setSaler] = useState('');
   const { account } = useAccount();
-  const { abi } = useAccountABI(account?.contractAddress);
-  const { push } = useTransactionStore();
+  const { abi } = useAccountABI(account!.contractAddress);
   const [id, setId] = useState('');
-  const [order, setOrder] = useState<any>(null);
   const router = useRouter();
-  const pathname = usePathname();
 
   const getOrderList = async () => {
     try {
       const Selector = hash.getSelectorFromName('get_active_orders');
-      const contract = new Contract(abi!, salerAddress!, provider);
+      const contract = new Contract(abi!, salerAddress as string, provider);
       console.log(salerAddress, abi);
       const result = await contract.read_own_dapp(MarketDapp!.classHash, Selector, []);
       const [lenInt, ...rest] = result;
@@ -323,13 +319,9 @@ const BuyPanel = () => {
   );
 
   const getOrder = async () => {
-    if (!id) {
-      toast.error('Please input order id');
-      return;
-    }
     try {
       const Selector = hash.getSelectorFromName('get_order_info');
-      const contract = new Contract(abi!, salerAddress!, provider);
+      const contract = new Contract(abi!, salerAddress as string, provider);
       console.log(MarketDapp!.classHash, Selector, [id]);
       const result = await contract.read_own_dapp(MarketDapp!.classHash, Selector, [Number(id)]);
       console.log(result, 'result');
@@ -351,7 +343,7 @@ const BuyPanel = () => {
       const decimal1 = await getDecimals(buyToken as string);
       const decimal2 = await getDecimals(sellToken as string);
 
-      setOrder({
+      console.log({
         sellToken,
         buyToken,
         sellAmount,
@@ -365,8 +357,7 @@ const BuyPanel = () => {
   };
 
   const handleEnter = () => {
-    const params = createQueryString(searchParams, 'saler', saler);
-    router.push(pathname + '?' + params);
+    router.push(`/owndapp/${saler}/dex`);
   };
 
   return (
@@ -380,7 +371,7 @@ const BuyPanel = () => {
                 <div className={'flex gap-2 items-center'}>
                   <div className={'flex items-center gap-2'}>
                     <img
-                      src={TokenUrlMap[it.tokenSellInfo!.symbol as keyof typeof TokenUrlMap] || TokenUrlMap.ERC20}
+                      src={TokenUrlMap[it.tokenSellInfo?.symbol as keyof typeof TokenUrlMap] || TokenUrlMap.ERC20}
                       alt="token"
                       className={'h-6'}
                     />
@@ -404,7 +395,7 @@ const BuyPanel = () => {
                 </div>
 
                 <div>
-                  <BuyModal order={it} orderID={it.id} saler={salerAddress!} />
+                  <BuyModal order={it} orderID={it.id} saler={salerAddress as string} />
                 </div>
               </div>
             );

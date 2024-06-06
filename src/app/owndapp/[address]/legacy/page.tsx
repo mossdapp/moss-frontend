@@ -2,11 +2,10 @@
 import { Container } from '@/components/Container';
 import { TabBar } from '@/components/TabBar';
 import { Button } from '@/components/ui/button';
-import { Drawer } from '@/components/Drawer';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
-import { cairo, Contract, hash, shortString } from 'starknet';
+import { cairo, Contract, hash } from 'starknet';
 import { provider, writeContract } from '@/core/account';
 import toast from 'react-hot-toast';
 import { useAccount, useAccountABI } from '@/hooks/useAccount';
@@ -31,12 +30,12 @@ const LegacySetting = () => {
       const Selector = hash.getSelectorFromName('set_legacy_receiver');
       const transactions = [
         {
-          contractAddress: account?.contractAddress,
+          contractAddress: account!.contractAddress,
           entrypoint: 'execute_own_dapp',
           calldata: [LegacyDapp!.classHash, Selector, [address, duration]]
         }
       ];
-      const response = await writeContract(account.publicKey, transactions);
+      const response = await writeContract(account!.publicKey, transactions);
       console.log(response); //transaction_hash
       push(response.transaction_hash);
       toast.success('Transaction submitted successfully');
@@ -73,12 +72,12 @@ const LegacySetting = () => {
 const LegacyClaimModal = () => {
   const [open, setOpen] = useState(false);
   const { account } = useAccount();
-  const { abi } = useAccountABI(account?.contractAddress);
+  const { abi } = useAccountABI(account!.contractAddress);
   const { push } = useTransactionStore();
 
   const getLegacyFunc = async (func: string) => {
     const Selector = hash.getSelectorFromName(func);
-    const contract = new Contract(abi!, account?.contractAddress, provider);
+    const contract = new Contract(abi!, account!.contractAddress, provider);
     const result = await contract.read_own_dapp(LegacyDapp!.classHash, Selector, []);
     console.log(result, 'result');
     return Number(result[0]);
@@ -91,12 +90,12 @@ const LegacyClaimModal = () => {
       const Selector = hash.getSelectorFromName('trigger_legacy');
       const transactions = [
         {
-          contractAddress: account?.contractAddress,
+          contractAddress: account!.contractAddress,
           entrypoint: 'execute_own_dapp',
           calldata: [LegacyDapp!.classHash, Selector, []]
         }
       ];
-      const response = await writeContract(account.publicKey, transactions);
+      const response = await writeContract(account!.publicKey, transactions);
       console.log(response); //transaction_hash
       push(response.transaction_hash);
       toast.success('Transaction submitted successfully');
@@ -145,12 +144,12 @@ export default function Legacy() {
       const Selector = hash.getSelectorFromName(functionName);
       const transactions = [
         {
-          contractAddress: account?.contractAddress,
+          contractAddress: account!.contractAddress,
           entrypoint: 'execute_own_dapp',
           calldata: [LegacyDapp!.classHash, Selector, []]
         }
       ];
-      const response = await writeContract(account.publicKey, transactions);
+      const response = await writeContract(account!.publicKey, transactions);
       console.log(response); //transaction_hash
       push(response.transaction_hash);
       toast.success('Transaction submitted successfully');

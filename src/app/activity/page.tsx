@@ -13,10 +13,8 @@ import { useAccount } from '@/hooks/useAccount';
 
 export default function ActivityPage() {
   const { account } = useAccount();
-
-  console.log(account?.contractAddress);
   const { data: activityData } = useSWR(['activity', account?.contractAddress], () =>
-    getTransactions(account?.contractAddress)
+    getTransactions(account!.contractAddress)
   );
 
   console.log(activityData);

@@ -14,17 +14,21 @@ const DappItem = ({ item: it, abi }: { item: any; abi: any }) => {
   const getOwnDapps = async (it: any) => {
     console.log(it, 'ss');
     if (!it.classHash) return;
-    const contract = new Contract(abi, account.contractAddress, provider);
+    const contract = new Contract(abi, account!.contractAddress, provider);
 
     const state = await contract.get_own_dapp_state(it.classHash);
     console.log(it, state);
     return state;
   };
-  const { data: state } = useSWR(['ownapp-status', it], () => getOwnDapps(it));
+  const { data: state } = useSWR(['owndapp-status', it], () => getOwnDapps(it));
 
   if (!state) return null;
   return (
-    <div key={it.name} className={'flex flex-col gap-4 cursor-pointer'} onClick={() => router.push(it.path)}>
+    <div
+      key={it.name}
+      className={'flex flex-col gap-4 cursor-pointer'}
+      onClick={() => router.push(`/owndapp/${account!.contractAddress}${it.path}`)}
+    >
       <img src={it.icon} alt={it.name} className={'w-20 h-20 mx-auto'} />
       <div className={'text-center text-sm text-muted-foreground'}>{it.name}</div>
     </div>
@@ -34,7 +38,7 @@ const DappItem = ({ item: it, abi }: { item: any; abi: any }) => {
 const AppPage = () => {
   const router = useRouter();
   const { account } = useAccount();
-  const { abi } = useAccountABI(account?.contractAddress);
+  const { abi } = useAccountABI(account!.contractAddress);
 
   return (
     <div>

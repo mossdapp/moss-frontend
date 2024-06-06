@@ -10,7 +10,7 @@ import { fetchTokenInfo, queryNFTBalance, queryTokenBalance } from '@/services/w
 import { NFTIcon } from '@/components/Icons';
 import { Suspense, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import * as React from 'react';
+import React from 'react';
 import { cairo, Contract, hash, num, uint256 } from 'starknet';
 import { provider, writeContract } from '@/core/account';
 import toast from 'react-hot-toast';
@@ -20,8 +20,8 @@ import { Input } from '@/components/ui/input';
 import { getDecimals } from '@/core/web3';
 import { formatUnits, parseUnits } from 'viem';
 import { Select } from '@/components/Select';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { createQueryString, shortenAddress } from '@/utils/common';
+import { useParams, usePathname, useRouter } from 'next/navigation';
+import { shortenAddress } from '@/utils/common';
 import { chunk } from 'lodash';
 
 const MarketDapp = DappList.find((it) => it.name === 'NFTMarket');
@@ -29,7 +29,7 @@ const MarketDapp = DappList.find((it) => it.name === 'NFTMarket');
 const NFTPanel = () => {
   const { account } = useAccount();
   const { data: banlanceData } = useSWR(['nft-balance', account?.contractAddress], () =>
-    queryNFTBalance(account?.contractAddress)
+    queryNFTBalance(account!.contractAddress)
   );
 
   return (
@@ -72,7 +72,7 @@ const ListModal = ({ nftContract, tokenID }: { nftContract: string; tokenID: str
   const { push } = useTransactionStore();
   const [loading, setLoading] = useState(false);
   const { data: banlanceData } = useSWR(['token-balance', account?.contractAddress], () =>
-    queryTokenBalance(account?.contractAddress)
+    queryTokenBalance(account!.contractAddress)
   );
 
   const handleSubmit = async () => {
@@ -86,12 +86,12 @@ const ListModal = ({ nftContract, tokenID }: { nftContract: string; tokenID: str
       const res1 = cairo.uint256(tokenID);
       const transactions = [
         {
-          contractAddress: account?.contractAddress,
+          contractAddress: account!.contractAddress,
           entrypoint: 'execute_own_dapp',
           calldata: [MarketDapp!.classHash, Selector, [nftContract, res1.low, res1.high, address, res.low, res.high]]
         }
       ];
-      const response = await writeContract(account.publicKey, transactions);
+      const response = await writeContract(account!.publicKey, transactions);
       console.log(response); //transaction_hash
       push(response.transaction_hash);
       toast.success('Transaction submitted successfully');
@@ -182,7 +182,7 @@ const BuyModal = ({
       const BuySelector = hash.getSelectorFromName('buy_nft');
       const transactions = [
         {
-          contractAddress: account?.contractAddress,
+          contractAddress: account!.contractAddress,
           entrypoint: 'execute_own_dapp',
           calldata: [TokenManageDapp!.classHash, Selector, [order.asset_contract, saler, res.low, res.high]]
         },
@@ -192,7 +192,7 @@ const BuyModal = ({
           calldata: [MarketDapp!.classHash, BuySelector, [TokenManageDapp?.classHash, orderID]]
         }
       ];
-      const response = await writeContract(account.publicKey, transactions);
+      const response = await writeContract(account!.publicKey, transactions);
       console.log(response); //transaction_hash
       push(response.transaction_hash);
       toast.success('Transaction submitted successfully');
@@ -257,12 +257,11 @@ const BuyModal = ({
 };
 
 const BuyPanel = () => {
-  const searchParams = useSearchParams();
-  const salerAddress = searchParams.get('saler');
+  const { address: salerAddress } = useParams<{ address: string }>();
   const [saler, setSaler] = useState('');
   const [open, setOpen] = useState(false);
   const { account } = useAccount();
-  const { abi } = useAccountABI(account?.contractAddress);
+  const { abi } = useAccountABI(account!.contractAddress);
   const { push } = useTransactionStore();
   const [id, setId] = useState('');
   const router = useRouter();
@@ -336,8 +335,7 @@ const BuyPanel = () => {
   };
 
   const handleEnter = () => {
-    const params = createQueryString(searchParams, 'saler', saler);
-    router.push(pathname + '?' + params);
+    router.push(`/owndapp/${saler}/nft_market`);
   };
   console.log(salerAddress, data);
 

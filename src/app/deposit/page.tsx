@@ -15,7 +15,7 @@ export default function DepositPage() {
       <div className={'p-8 flex flex-col justify-center items-center'}>
         <QRCode value={account?.contractAddress || ''} />
         <div className={'mt-6'}>
-          <CopyText text={account?.contractAddress} className={'block'}>
+          <CopyText text={account!.contractAddress} className={'block'}>
             <div className={'break-all text-gray-600'}>{account?.contractAddress}</div>
           </CopyText>
         </div>

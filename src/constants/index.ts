@@ -30,36 +30,36 @@ export const DappList = [
     name: 'Dex',
     icon: DexImg.src,
     classHash: '0x06b6b085e3bfbfac69f915b5b5271642f7f09d15081c0fa73fe2364d96c2b8a1',
-    path: '/ownapp/dex'
+    path: '/dex'
   },
   {
     name: 'Legacy',
     icon: LegacyImg.src,
     classHash: '0x07a48c905bfacb96fd20cfe57f5092d5396cdde0a48cd645a8215dc924c62ba1',
-    path: '/ownapp/legacy'
+    path: '/legacy'
   },
   {
     name: 'NFTManage',
     icon: NFTManageImg.src,
     classHash: '0x052144d89fb1c3ed153a048c7795999172ce953062ff181353469ad46ded015f',
-    path: '/ownapp/nft_manage'
+    path: '/nft_manage'
   },
   {
     name: 'NFTMarket',
     icon: NFTMarketImg.src,
     classHash: '0x01cbdd523bd902d89970558d5a82188b8423436fd29ec91a542c29e01bbb6968',
-    path: '/ownapp/nft_market'
+    path: '/nft_market'
   },
   {
     name: 'SocialTag',
     icon: SocialTagImg.src,
     classHash: '0x008343ff1b5f03167899f6d9020720e16492d0d1eefc5026f9d12a0de0c3ef71',
-    path: '/ownapp/tag'
+    path: '/tag'
   },
   {
     name: 'TokenManage',
     icon: TokenManageImg.src,
     classHash: '0x032093a8d8e0a79801d1e2320e306e1334b5dda28bff3129797ce9fbd9209d26',
-    path: '/ownapp/token_manage'
+    path: '/token_manage'
   }
 ];

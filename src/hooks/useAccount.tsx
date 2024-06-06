@@ -1,18 +1,23 @@
-import {useLocalStorage} from "react-use";
-import {GlobalConfig} from "@/constants";
-import useSWR from "swr";
-import {provider} from "@/core/account";
+import { useLocalStorage } from 'react-use';
+import { GlobalConfig } from '@/constants';
+import useSWR from 'swr';
+import { provider } from '@/core/account';
+
+interface IAccount {
+  contractAddress: string;
+  publicKey: string;
+}
 
 export const useAccount = () => {
-    const [data] = useLocalStorage<any>(GlobalConfig.mossWalletKey, null);
-    const account = data?.account;
-    return { account };
-}
+  const [data] = useLocalStorage<{ account: IAccount } | null>(GlobalConfig.mossWalletKey, null);
+  const account = data?.account;
+  return { account };
+};
 
 export const useAccountABI = (address: string) => {
-    const { data } = useSWR(['abi', address], () => provider.getClassAt(address));
+  const { data } = useSWR(['abi', address], () => provider.getClassAt(address));
 
-    return {
-        abi: data?.abi,
-    }
-}
+  return {
+    abi: data?.abi
+  };
+};
