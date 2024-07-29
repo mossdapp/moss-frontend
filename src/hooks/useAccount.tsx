@@ -10,7 +10,10 @@ interface IAccount {
 
 export const useAccount = () => {
   const [data] = useLocalStorage<{ account: IAccount } | null>(GlobalConfig.mossWalletKey, null);
-  const account = data?.account;
+  const account = data?.account || {
+    contractAddress: '',
+    publicKey: ''
+  };
   return { account };
 };
 

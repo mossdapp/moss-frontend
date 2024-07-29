@@ -22,7 +22,7 @@ const TokenList = () => {
   const router = useRouter();
   const { account } = useAccount();
   const { data: banlanceData } = useSWR(['token-balance', account?.contractAddress], () =>
-    queryTokenBalance(account?.contractAddress)
+    queryTokenBalance(account!.contractAddress)
   );
 
   return (
@@ -56,7 +56,7 @@ const NFTList = () => {
   const router = useRouter();
   const { account } = useAccount();
   const { data: banlanceData } = useSWR(['nft-balance', account?.contractAddress], () =>
-    queryNFTBalance(account?.contractAddress)
+    queryNFTBalance(account!.contractAddress)
   );
 
   return (
@@ -94,12 +94,12 @@ export default function Wallet() {
   const { push } = useTransactionStore();
 
   const { data: contractInfo, mutate } = useSWR(['contractInfo', account?.contractAddress], () =>
-    queryContractInfo(account?.contractAddress)
+    queryContractInfo(account!.contractAddress)
   );
 
   const handleDeploy = async () => {
     try {
-      const deployHash = await getDeployHash(account.publicKey);
+      const deployHash = await getDeployHash(account!.publicKey);
 
       const publicKeyCredentialRequestOptions = {
         challenge: bufferDecodeHexString(deployHash),
@@ -131,7 +131,7 @@ export default function Wallet() {
       console.log(`signCount: ${signCount}`);
       console.log(signatureHex);
 
-      const response = await deployAccount(account.publicKey, signatureHex.slice(2), signCount);
+      const response = await deployAccount(account!.publicKey, signatureHex.slice(2), signCount);
       push(response.transaction_hash);
       toast.success('Deploy transaction submit successfully');
       const recipient = await provider.waitForTransaction(response.transaction_hash);
@@ -162,7 +162,7 @@ export default function Wallet() {
         </Link>
       </div>
       <div className={'flex justify-center text-foreground text-md font-bold mt-5'}>
-        <CopyText text={account?.contractAddress}>{shortenAddress(account?.contractAddress)}</CopyText>
+        <CopyText text={account!.contractAddress}>{shortenAddress(account?.contractAddress)}</CopyText>
       </div>
       {contractInfo && !contractInfo?.data ? (
         <Alert className={'mt-8'} variant="destructive">

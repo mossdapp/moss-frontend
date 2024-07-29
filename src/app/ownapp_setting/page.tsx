@@ -40,7 +40,7 @@ export default function OwnappSetting() {
               calldata: [classHashs, new Array(classHashs.length).fill(1)]
             }
           ];
-      const response = await writeContract(account.publicKey, transactions);
+      const response = await writeContract(account!.publicKey, transactions);
       console.log(response); //transaction_hash
       toast.success('Transaction submitted successfully');
     } catch (e: any) {
