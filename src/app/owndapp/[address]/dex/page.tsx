@@ -193,10 +193,10 @@ const BuyModal = ({ order, orderID, saler }: { order: any; orderID: string; sale
   const TokenManageDapp = DappList.find((it) => it.name === 'TokenManage');
 
   const handleSubmit = async () => {
-    console.log('submit');
+    console.log(order, 'submit');
     try {
       setLoading(true);
-      const res = cairo.uint256(order.sellAmount.toString());
+      const res = cairo.uint256(order.amount_sell.toString());
       const Selector = hash.getSelectorFromName('token_approve');
       console.log('Selector =', Selector);
       const BuySelector = hash.getSelectorFromName('buy_order');
